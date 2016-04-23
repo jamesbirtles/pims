@@ -4,15 +4,14 @@ import {RethinkConnection} from "./connection";
 
 export class Model {
   private _prev = {};
-  private _schema;
+  private _schemaRaw;
+  private _schema: (input: any) => boolean;
   private _conn: RethinkConnection;
   private _pk = "id";
 
-  constructor() {
-    const keys = Object.keys(this._schema);
-    for (let i = 0, len = keys.length; i < len; i++) {
-      this._prev[keys[i]] = this[keys[i]];
-    }
+  constructor(data?: any) {
+    this._prev = this.getRaw();
+    _.assign(this, data);
   }
 
   public save(): Promise<Model> {
@@ -37,6 +36,19 @@ export class Model {
     }
 
     return q.get(this[this._pk]).update(changed).run().then(() => this);
+  }
+  
+  public validate(): boolean {
+    return this._schema(this.getRaw());
+  }
+  
+  public getRaw() {
+    const raw = {};
+    const keys = Object.keys(this._schemaRaw);
+    for (let i = 0, len = keys.length; i < len; i++) {
+      raw[keys[i]] = this[keys[i]];
+    }
+    return raw;
   }
 
   public getChangedKeys() {

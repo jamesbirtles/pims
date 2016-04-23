@@ -2,8 +2,8 @@
   "name": "rethinkts",
   "version": "1.0.0",
   "description": "A model system for RethinkDB, written in and for TypeScript.",
-  "main": "built/index.js",
-  "typings": "built/index.d.ts",
+  "main": "js/index.js",
+  "typings": "js/index",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

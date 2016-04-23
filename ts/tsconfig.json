@@ -6,12 +6,12 @@
     "emitDecoratorMetadata": true,
     "sourceMap": false,
     "noImplicitAny": false,
-    "outDir": "built"
+    "outDir": "../js",
+    "declaration": true
   },
   "exclude": [
     "node_modules",
     "typings/browser",
-    "typings/browser.d.ts",
-    "built"
+    "typings/browser.d.ts"
   ]
 }
