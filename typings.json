@@ -1,0 +1,12 @@
+{
+  "name": "rethinkts",
+  "version": false,
+  "dependencies": {
+    "bluebird": "registry:npm/bluebird#3.3.4+20160411163813",
+    "lodash": "registry:npm/lodash#4.0.0+20160416211519",
+    "rethinkdbdash": "github:ExoZoneDev/typings-rethinkdbdash#a12a51fb6b9126b274f64b028427136d2626d616"
+  },
+  "ambientDependencies": {
+    "node": "registry:dt/node#4.0.0+20160412142033"
+  }
+}
