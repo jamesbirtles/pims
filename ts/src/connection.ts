@@ -1,5 +1,6 @@
 import * as RethinkDBDash from "rethinkdbdash";
 import {Validators} from "../";
+import {Model} from "./model";
 
 export class RethinkConnection {
   public r: RethinkDBDash.Term;
@@ -13,9 +14,9 @@ export class RethinkConnection {
     });
   }
 
-  registerModel(Model: any) {
-    Model.prototype._conn = this;
-    Model.prototype._schema = Validators.Schema(Model.prototype._schemaRaw);
+  registerModel(TheModel: typeof Model) {
+    TheModel.prototype._conn = this;
+    TheModel.prototype._schema = Validators.Schema(TheModel.prototype._schemaRaw);
     
     // const tableName = "";
     // this.r.tableList().contains(tableName).do((exists) => {
