@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import * as Validators from "./src/validators";
 
 export * from "./src/model";
