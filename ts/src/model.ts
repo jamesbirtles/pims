@@ -6,13 +6,15 @@ import {SchemaError} from "./validators/schema";
 
 export class Model {
   _prev;
+  _computedFields;
   _schemaRaw;
   _schema: (input: any) => SchemaError;
   _conn: RethinkConnection;
-  _pk;
-  _table;
+  _pk: string;
+  _table: string;
 
   constructor(data: any = {}, isNew = true) {
+    this._defineProperties();
     if (isNew) {
       this._prev = this.getRaw();
       _.assign(this, data);
@@ -22,11 +24,15 @@ export class Model {
     }
   }
   
-  public static get<T extends Model>(id: string): Promise<T> {
-    return this.prototype.query().get(id).run()
-      .then(data => {
-        return new this(data, false);
-      });
+  public static get<T extends Model>(id: string, index?: string): Promise<T> {
+    let q: any = this.prototype.query();
+    if (index) {
+      q = q.getAll(id, {index: index}).run().then(data => data[0]);
+    } else {
+      q = q.get(id).run();
+    }
+    
+    return q.then(data => data ? new this(data, false) : null);
   }
 
   public query(): Term {
@@ -80,7 +86,35 @@ export class Model {
       return _.isEqual(value, this[key]) ? result : result.concat(key);
     }, []);
   }
+  
+  private _defineProperties() {
+    let computedKeys = Object.keys(this._computedFields);
+    for (let i = 0, len = computedKeys.length; i < len; i++) {
+      let key = computedKeys[i];
+      this._defineComputedField(key, this._computedFields[key])
+    }
+
+    this._defineProperty("_prev", null);
+  }
+  
+  private _defineProperty(key: string, initialValue) {
+    let value = initialValue;
+    Object.defineProperty(this, key, {
+      get: () => value,
+      set: (newValue) => value = newValue,
+      enumerable: false,
+      configurable: false
+    })
+  }
+  
+  private _defineComputedField(key: string, func: (model: this) => any) {
+    Object.defineProperty(this, key, {
+      get: func.bind(this, this),
+      enumerable: true
+    });
+  }
 }
 
 Model.prototype._table = "users";
 Model.prototype._pk = "id";
+Model.prototype._computedFields = [];
