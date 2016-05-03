@@ -1,6 +1,6 @@
 {
   "name": "rethinkts",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A model system for RethinkDB, written in and for TypeScript.",
   "main": "js/index.js",
   "typings": "js/index",
