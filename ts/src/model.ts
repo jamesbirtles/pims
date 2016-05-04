@@ -72,16 +72,14 @@ export class Model {
       this._prev[changes[i]] = this[changes[i]];
       changed[changes[i]] = this[changes[i]];
     }
-
-    if (this[this._pk] == null) {
-      return this.query().insert(changed).run()
-        .then(doc => {
-          this[this._pk] = doc.generated_keys[0];
-          return this;
-        })
-    }
-
-    return this.query().get(this[this._pk]).update(changed).run().then(() => this);
+    
+    changed[this._pk] = this[this._pk];
+    
+    return this.query().insert(changed, {conflict: "update"}).run()
+      .then(doc => {
+        if (doc.generated_keys) this[this._pk] = doc.generated_keys[0];
+        return this;
+      })
   }
 
   public join(key: string): Promise<this> {
@@ -123,7 +121,6 @@ export class Model {
 
   public getChangedKeys() {
     return _.reduce(<any>this._prev, (result, value, key) => {
-      if (this._pk === key) return result;
       return _.isEqual(value, this[key]) ? result : result.concat(key);
     }, []);
   }

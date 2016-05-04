@@ -5,9 +5,6 @@ import {Model} from "./model";
 
 export class RethinkConnection {
   public r: RethinkDBDash.Term;
-  public models: {
-    [key: string]: typeof Model
-  }
 
   constructor(db: string, host: string, port: number, authKey?: string) {
     this.r = (<any>RethinkDBDash)({
@@ -18,17 +15,16 @@ export class RethinkConnection {
     });
   }
 
-  registerModel(TheModel: typeof Model) {
+  registerModel(TheModel: typeof Model): Promise<{tables_created: number}> {
     const name = (<any>TheModel).name.toLowerCase();
-    this.models[name] = TheModel;
+    const table = pluralise(name);
     
     TheModel.prototype._conn = this;
     TheModel.prototype._schema = Validators.Schema(TheModel.prototype._schemaRaw);
-    TheModel.prototype._table = pluralise(name);
+    TheModel.prototype._table = table;
     
-    // const tableName = "";
-    // this.r.tableList().contains(tableName).do((exists) => {
-    //   return this.r.branch(exists, {tables_created: 0}, this.r.tableCreate(tableName));
-    // });
+    return (<any>this.r).tableList().contains(table).do(exists => {
+      return (<any>this.r).branch(exists, {tables_created: 0}, (<any>this.r).tableCreate(table));
+    }).run();
   }
 }
