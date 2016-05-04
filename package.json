@@ -27,6 +27,7 @@
   "dependencies": {
     "bluebird": "^3.3.5",
     "lodash": "^4.11.1",
+    "pluralize": "^1.2.1",
     "reflect-metadata": "^0.1.3",
     "rethinkdbdash": "^2.3.2"
   },

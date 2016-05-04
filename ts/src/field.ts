@@ -19,3 +19,32 @@ export function ComputedField<T extends Model>(func: (model: T) => any): Propert
     return target;
   }
 }
+
+export interface LinkedFieldOptions {
+  field?: string;
+  model?: typeof Model;
+}
+
+export function LinkedField(options: LinkedFieldOptions = {}): PropertyDecorator  {
+  return function (target: any, key: string) {
+    let {field, model} = options;
+    let propertyType = Reflect.getMetadata("design:type", target, key);
+    let relationType = propertyType === Array ? "hasMany" : "belongsTo";
+    
+    field = field || key + "Id";
+    model = model || propertyType;
+    
+    if (model as any === Array) {
+      throw new Error("Linked field was an array, you must specify the model, e.g. @LinkedField({model: MyModel}) ...");
+    } else if (!(model.prototype instanceof Model)) {
+      throw new Error("Linked field type must extend Model, or specify a model, e.g. @LinkedField({model: MyModel}) ...");
+    }
+    
+    target._relations[key] = {
+      type: relationType,
+      field, model
+    };
+    
+    return target;
+  }
+}

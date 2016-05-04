@@ -4,9 +4,18 @@ import {Term} from "rethinkdbdash";
 import {RethinkConnection} from "./connection";
 import {SchemaError} from "./validators/schema";
 
+export interface RelationMap {
+  [key: string]: {
+    type: string;
+    field: string;
+    model: typeof Model;
+  }
+}
+
 export class Model {
   _prev;
   _computedFields;
+  _relations: RelationMap;
   _schemaRaw;
   _schema: (input: any) => SchemaError;
   _conn: RethinkConnection;
@@ -34,12 +43,20 @@ export class Model {
     
     return q.then(data => data ? new this(data, false) : null);
   }
+  
+  public static getAll<T extends Model>(id: string, index?: string): Promise<T> {
+    let q: any = this.prototype.query();
+    return q.getAll(id, {index: index}).run()
+      .map(res => {
+        new this(res, false);
+      })
+  }
 
   public query(): Term {
     return this._conn.r.table(this._table);
   }
 
-  public save(): Promise<Model> {
+  public save(): Promise<this> {
     const changes = this.getChangedKeys();
     if (changes.length === 0) {
       return Promise.resolve(this);
@@ -66,7 +83,31 @@ export class Model {
 
     return this.query().get(this[this._pk]).update(changed).run().then(() => this);
   }
-  
+
+  public join(key: string): Promise<this> {
+    const relation = this._relations[key];
+    return Promise.resolve()
+      .then(() => {
+        if (!relation) {
+          return Promise.reject(new Error(`No relation found for '${key}'`));
+        }
+        
+        let q: any = relation.model.prototype.query();
+        
+        if (relation.type === "hasMany") {
+          return relation.model.getAll(this[this._pk], relation.field);
+        } else if (relation.type === "belongsTo") {
+          return relation.model.get(this[relation.field]);
+        }
+        
+        return Promise.reject(new Error(`Unknown relation type '${relation.type}'`));
+      })
+      .then(res => {
+        this[key] = res;
+        return this;
+      });
+  }
+
   public validate(): SchemaError {
     return this._schema(this.getRaw());
   }
@@ -115,6 +156,6 @@ export class Model {
   }
 }
 
-Model.prototype._table = "users";
 Model.prototype._pk = "id";
-Model.prototype._computedFields = [];
+Model.prototype._computedFields = {};
+Model.prototype._relations = {};
