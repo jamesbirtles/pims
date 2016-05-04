@@ -5,7 +5,9 @@
   "main": "js/index.js",
   "typings": "js/index",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tsc": "cd ts && tsc",
+    "test": "npm run tsc && cd js && mocha",
+    "prepublish": "npm test"
   },
   "repository": {
     "type": "git",
@@ -32,6 +34,9 @@
     "rethinkdbdash": "^2.3.2"
   },
   "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.3.0",
+    "mocha": "^2.4.5",
     "typescript": "^1.8.10",
     "typings": "^0.7.12"
   }

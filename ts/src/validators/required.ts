@@ -2,7 +2,7 @@ export function Required(input: any) {
   const valid = input != null;
   return {
     valid, input,
-    error: valid ? undefined : {
+    error: valid ? null : {
       message: "required.invalid"
     }
   };

@@ -3,7 +3,7 @@ export function OneOf(...args: string[]) {
     const valid = input == null || args.indexOf(input) > -1;
     return {
       valid, input,
-      error: valid ? undefined : {
+      error: valid ? null : {
         message: "oneof.invalid",
         args: [args]
       }

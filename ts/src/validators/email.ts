@@ -1,8 +1,8 @@
 export function Email(input: string) {
-  const valid = /^.*@.*$/.test(input);
+  const valid = input == null || /^.+@.+$/.test(input);
   return {
     valid, input,
-    error: valid ? undefined : {
+    error: valid ? null : {
       message: "email.invalid"
     }
   };
