@@ -48,3 +48,12 @@ export function LinkedField(options: LinkedFieldOptions = {}): PropertyDecorator
     return target;
   }
 }
+
+export function FieldTag(...tags: string[]): PropertyDecorator  {
+  return function (target: any, key: string) {
+    target._tags = target._tags || {};
+    target._tags[key] = tags;
+    
+    return target;
+  }
+}

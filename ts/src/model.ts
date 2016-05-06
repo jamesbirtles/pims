@@ -12,6 +12,10 @@ export interface RelationMap {
   }
 }
 
+export interface TagMap {
+  [key: string]: string[];
+}
+
 export class Model {
   _prev;
   _computedFields;
@@ -21,14 +25,15 @@ export class Model {
   _conn: RethinkConnection;
   _pk: string;
   _table: string;
+  _tags: TagMap;
 
   constructor(data: any = {}, isNew = true) {
     this._defineProperties();
     if (isNew) {
       this._prev = this.getRaw();
-      _.assign(this, data);
+      this.assign(data);
     } else {
-      _.assign(this, data);
+      this.assign(data);
       this._prev = this.getRaw();
     }
   }
@@ -45,11 +50,15 @@ export class Model {
   }
   
   public static getAll<T extends Model>(id: string, index?: string): Promise<T> {
-    let q: any = this.prototype.query();
+    const q: any = this.prototype.query();
     return q.getAll(id, {index: index}).run()
-      .map(res => {
-        new this(res, false);
-      })
+      .map(res => new this(res, false))
+  }
+  
+  public static find<T extends Model>(query: any): Promise<T[]> {
+    const q: any = this.prototype.query();
+    return q.filter(query).run()
+      .map(res => new this(res, false));
   }
 
   public query(): Term {
@@ -105,6 +114,40 @@ export class Model {
         return this;
       });
   }
+  
+  public withoutFields(tag: string): this {
+    const fields = this.getFields();
+    
+    let returnData = {};
+    for (let i = 0, len = fields.length; i < len; i++) {
+      const key = fields[i];
+      const tags = this._tags[key];
+      
+      // If this key does not have the tag.
+      if (!tags || tags.indexOf(tag) === -1) {
+        returnData[key] = this[key];
+      }
+    }
+    
+    return new (<typeof Model> this.constructor)(returnData) as this;
+  }
+  
+  public withFields(tag: string): this {
+    const fields = this.getFields();
+    
+    let returnData = {};
+    for (let i = 0, len = fields.length; i < len; i++) {
+      const key = fields[i];
+      const tags = this._tags[key];
+      
+      // If this key has the tag.
+      if (tags && tags.indexOf(tag) > -1) {
+        returnData[key] = this[key];
+      }
+    }
+    
+    return new (<typeof Model> this.constructor)(returnData) as this;
+  }
 
   public validate(): SchemaError {
     return this._schema(this.getRaw());
@@ -123,6 +166,21 @@ export class Model {
     return _.reduce(<any>this._prev, (result, value, key) => {
       return _.isEqual(value, this[key]) ? result : result.concat(key);
     }, []);
+  }
+  
+  public getFields() {
+    return Object.keys(this._schemaRaw);
+  }
+  
+  public assign(data: any) {
+    const fields = this.getFields();
+    
+    for (let i = 0, keys = Object.keys(data), len = keys.length; i < len; i++) {
+      const key = keys[i];
+      if (fields.indexOf(key) > -1) {
+        this[key] = data[key];
+      }
+    }
   }
   
   private _defineProperties() {
@@ -156,3 +214,4 @@ export class Model {
 Model.prototype._pk = "id";
 Model.prototype._computedFields = {};
 Model.prototype._relations = {};
+Model.prototype._tags = {};
