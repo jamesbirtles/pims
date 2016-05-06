@@ -8,7 +8,8 @@ export interface RelationMap {
   [key: string]: {
     type: string;
     field: string;
-    modelName: string;
+    modelName?: string;
+    modelFactory: (model: Model) => typeof Model | string;
   }
 }
 
@@ -25,6 +26,7 @@ export class Model {
   _conn: RethinkConnection;
   _pk: string;
   _table: string;
+  _db: string;
   _tags: TagMap;
 
   constructor(data: any = {}, isNew = true) {
@@ -62,7 +64,7 @@ export class Model {
   }
 
   public query(): Term {
-    return this._conn.r.table(this._table);
+    return this._conn.r.db(this._db).table(this._table);
   }
 
   public save(): Promise<this> {
@@ -101,7 +103,15 @@ export class Model {
           return Promise.reject(new Error(`No relation found for '${key}'`));
         }
         
-        const model = this._conn.getModel(relation.modelName);
+        let model;
+        if (relation.modelFactory) {
+          model = relation.modelFactory(this);
+          if (_.isString(model)) {
+            model = this._conn.getModel(model);
+          }
+        } else {
+          model = this._conn.getModel(relation.modelName);
+        }
         let q: any = model.prototype.query();
         
         if (relation.type === "hasMany") {
@@ -185,10 +195,14 @@ export class Model {
   }
   
   public getFields(includeComputed: boolean = false) {
-    let fields = Object.keys(this._schemaRaw).concat(Object.keys(this._relations));
+    const fields = Object.keys(this._schemaRaw);
+    
+    if (this._relations) {
+      fields.push(...Object.keys(this._relations));
+    }
     
     if (includeComputed && this._computedFields) {
-      fields = fields.concat(Object.keys(this._computedFields));
+      fields.push(...Object.keys(this._computedFields));
     }
     
     return fields;

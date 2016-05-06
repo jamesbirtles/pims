@@ -11,8 +11,9 @@ chai.use(chaiAsPromised);
 describe("Model", () => {
   let rethink: RethinkConnection;
   before(() => {
-    rethink = new RethinkConnection(config.db, config.host, config.port);
+    rethink = new RethinkConnection(config.host, config.port);
     
+    rethink.setDefaultDatabase(config.db);
     return rethink.registerModel(User);
   })
   

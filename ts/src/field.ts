@@ -26,22 +26,26 @@ export function ComputedField<T extends Model>(func: (model: T) => any): Propert
   }
 }
 
-export interface LinkedFieldOptions {
-  field?: string;
-  model?: () => typeof Model;
+export interface LinkedFieldOptions<T extends Model> {
+  model?: (model: T) => typeof Model | string;
 }
 
-export function LinkedField(modelName: string): PropertyDecorator  {
+export function LinkedField<T extends Model>(opts: string | LinkedFieldOptions<T>): PropertyDecorator  {
   return function (target: any, key: string) {
     target._relations = target._relations || {};
     
     const type = Reflect.getMetadata("design:type", target, key) === Array ? "hasMany" : "belongsTo";
-    console.log("Name", target.constructor.name);
     const targetName = _.camelCase(target.constructor.name);
     target._relations[key] = {
-      modelName, type,
+      type,
       field: type === "hasMany" ? targetName + "Id" : key + "Id",
     };
+    
+    if (_.isString(opts)) {
+      target._relations[key].modelName = opts;
+    } else {
+      target._relations[key].modelFactory = opts.model;
+    }
     
     return target;
   }
