@@ -213,7 +213,7 @@ export class Model {
     
     for (let i = 0, keys = Object.keys(data), len = keys.length; i < len; i++) {
       const key = keys[i];
-      if (fields.indexOf(key) > -1 && typeof data[key] !== undefined) {
+      if (fields.indexOf(key) > -1 && typeof data[key] !== "undefined") {
         this[key] = data[key];
       }
     }
