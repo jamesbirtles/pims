@@ -8,7 +8,7 @@ export interface RelationMap {
   [key: string]: {
     type: string;
     field: string;
-    model: typeof Model;
+    modelName: string;
   }
 }
 
@@ -91,7 +91,9 @@ export class Model {
       })
   }
 
-  public join(key: string): Promise<this> {
+  public join(key: string, mapFunction: (model: Model) => Model | Promise<Model> = model => model): Promise<this> {
+    if (!this._relations) return Promise.reject(new Error(`No relation found for '${key}'`));
+    
     const relation = this._relations[key];
     return Promise.resolve()
       .then(() => {
@@ -99,12 +101,14 @@ export class Model {
           return Promise.reject(new Error(`No relation found for '${key}'`));
         }
         
-        let q: any = relation.model.prototype.query();
+        const model = this._conn.getModel(relation.modelName);
+        let q: any = model.prototype.query();
         
         if (relation.type === "hasMany") {
-          return relation.model.getAll(this[this._pk], relation.field);
+          return model.getAll(this[this._pk], relation.field)
+            .map(mapFunction);
         } else if (relation.type === "belongsTo") {
-          return relation.model.get(this[relation.field]);
+          return model.get(this[relation.field]).then(mapFunction);
         }
         
         return Promise.reject(new Error(`Unknown relation type '${relation.type}'`));
@@ -115,8 +119,14 @@ export class Model {
       });
   }
   
-  public withoutFields(tag: string): this {
-    const fields = this.getFields();
+  /**
+   * Returns a new instance of the Model without fields with the tag specified.
+   * NOTE: This will freeze computed fields by default.
+   */
+  public withoutFields(tag: string, freezeComputed: boolean = true): this {
+    if (!this._tags) throw new Error("Not tags defined");
+    
+    const fields = this.getFields(freezeComputed);
     
     let returnData = {};
     for (let i = 0, len = fields.length; i < len; i++) {
@@ -132,8 +142,14 @@ export class Model {
     return new (<typeof Model> this.constructor)(returnData) as this;
   }
   
-  public withFields(tag: string): this {
-    const fields = this.getFields();
+  /**
+   * Returns a new instance of the Model only with the fields with the tag specified.
+   * NOTE: This will freeze computed fields by default.
+   */
+  public withFields(tag: string, freezeComputed: boolean = true): this {
+    if (!this._tags) throw new Error("Not tags defined");
+    
+    const fields = this.getFields(freezeComputed);
     
     let returnData = {};
     for (let i = 0, len = fields.length; i < len; i++) {
@@ -168,26 +184,34 @@ export class Model {
     }, []);
   }
   
-  public getFields() {
-    return Object.keys(this._schemaRaw);
+  public getFields(includeComputed: boolean = false) {
+    let fields = Object.keys(this._schemaRaw).concat(Object.keys(this._relations));
+    
+    if (includeComputed && this._computedFields) {
+      fields = fields.concat(Object.keys(this._computedFields));
+    }
+    
+    return fields;
   }
   
   public assign(data: any) {
-    const fields = this.getFields();
+    const fields = this.getFields(true);
     
     for (let i = 0, keys = Object.keys(data), len = keys.length; i < len; i++) {
       const key = keys[i];
-      if (fields.indexOf(key) > -1) {
+      if (fields.indexOf(key) > -1 && typeof data[key] !== undefined) {
         this[key] = data[key];
       }
     }
   }
   
   private _defineProperties() {
-    let computedKeys = Object.keys(this._computedFields);
-    for (let i = 0, len = computedKeys.length; i < len; i++) {
-      let key = computedKeys[i];
-      this._defineComputedField(key, this._computedFields[key])
+    if (this._computedFields) {
+      let computedKeys = Object.keys(this._computedFields);
+      for (let i = 0, len = computedKeys.length; i < len; i++) {
+        let key = computedKeys[i];
+        this._defineComputedField(key, this._computedFields[key])
+      }
     }
 
     this._defineProperty("_prev", null);
@@ -204,14 +228,20 @@ export class Model {
   }
   
   private _defineComputedField(key: string, func: (model: this) => any) {
+    let frozenValue;
+    let isFrozen = false;
     Object.defineProperty(this, key, {
-      get: func.bind(this, this),
+      get: () => {
+        if (isFrozen) return frozenValue;
+        return func(this);
+      },
+      set: (value) => {
+        isFrozen = true;
+        frozenValue = value;
+      },
       enumerable: true
     });
   }
 }
 
 Model.prototype._pk = "id";
-Model.prototype._computedFields = {};
-Model.prototype._relations = {};
-Model.prototype._tags = {};
