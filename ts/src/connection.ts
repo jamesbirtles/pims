@@ -11,12 +11,9 @@ export class RethinkConnection {
     [key: string]: typeof Model
   } = {};
 
-  constructor(host: string, port: number, authKey?: string) {
-    this.r = (<any>RethinkDBDash)({
-      servers: [
-        { host, port, authKey }
-      ]
-    });
+  // TODO: type
+  constructor(opts: any) {
+    this.r = (<any>RethinkDBDash)(opts);
   }
   
   setDefaultDatabase(defaultDatabase: string) {

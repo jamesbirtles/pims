@@ -16,7 +16,7 @@ describe("Model", () => {
   }
   
   before(() => {
-    rethink = new RethinkConnection(config.host, config.port);
+    rethink = new RethinkConnection(config.rethink);
 
     rethink.setDefaultDatabase(config.db);
     return rethink.registerModel(User);
