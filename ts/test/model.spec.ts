@@ -22,7 +22,7 @@ describe("Model", () => {
   })
   
   it("Creates the table if it doesn't exist", () => {
-    (<any>rethink.r).tableList().contains("users").should.eventually.be.true;
+    return (<any>rethink.r).tableList().contains("users").should.eventually.be.true;
   })
   
   describe("Save", () => {
@@ -34,7 +34,8 @@ describe("Model", () => {
       });
       
       return user.save().should.eventually.be.rejected
-        .then(() => rethink.r.table("users").get("1").should.not.eventually.exist);
+        .then(() => rethink.r.table("users").get("1"))
+        .should.not.eventually.exist;
     })
     
     it("Creates document", () => {
@@ -46,7 +47,8 @@ describe("Model", () => {
       });
       
       return user.save().should.eventually.be.fulfilled
-        .then(() => rethink.r.table("users").get("1").should.eventually.exist.and.have.property("name").that.equals("James"));
+        .then(() => rethink.r.table("users").get("1"))
+        .should.eventually.exist.and.have.property("name").that.equals("James");
     })
     
     it("Updates an existing document", () => {
@@ -55,7 +57,8 @@ describe("Model", () => {
           user.name = "Callum";
           return user.save();
         })
-        .then(() => rethink.r.table("users").get("1").should.eventually.exist.and.have.property("name").that.equals("Callum"))
+        .then(() => rethink.r.table("users").get("1"))
+        .should.eventually.exist.and.have.property("name").that.equals("Callum");
     })
   })
 })
