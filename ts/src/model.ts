@@ -131,7 +131,7 @@ export class Model {
   
   /**
    * Returns a new instance of the Model without fields with the tag specified.
-   * NOTE: This will freeze computed fields by default.
+   * NOTE: This will freeze computed fields.
    */
   public withoutFields(...excludedTags: string[]): this {
     if (!this._tags) throw new Error("Not tags defined");
@@ -154,7 +154,7 @@ export class Model {
   
   /**
    * Returns a new instance of the Model only with the fields with the tag specified.
-   * NOTE: This will freeze computed fields by default.
+   * NOTE: This will freeze computed fields.
    */
   public withFields(...includedTags: string[]): this {
     if (!this._tags) throw new Error("Not tags defined");
@@ -167,7 +167,7 @@ export class Model {
       const tags = this._tags[key];
       
       // If this key has the tag.
-      if (tags && _.intersection(tags, excludedTags).length > 0) {
+      if (tags && _.intersection(tags, includedTags).length > 0) {
         returnData[key] = this[key];
       }
     }
