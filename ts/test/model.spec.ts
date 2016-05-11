@@ -10,19 +10,24 @@ chai.use(chaiAsPromised);
 
 describe("Model", () => {
   let rethink: RethinkConnection;
+  
+  function query() {
+    return rethink.r.db(config.db);
+  }
+  
   before(() => {
     rethink = new RethinkConnection(config.host, config.port);
-    
+
     rethink.setDefaultDatabase(config.db);
     return rethink.registerModel(User);
   })
   
   after(() => {
-    return rethink.r.tableDrop("users");
+    return query().tableDrop("users");
   })
   
   it("Creates the table if it doesn't exist", () => {
-    return (<any>rethink.r).tableList().contains("users").should.eventually.be.true;
+    return (<any>query()).tableList().contains("users").should.eventually.be.true;
   })
   
   describe("Save", () => {
@@ -34,7 +39,7 @@ describe("Model", () => {
       });
       
       return user.save().should.eventually.be.rejected
-        .then(() => rethink.r.table("users").get("1"))
+        .then(() => query().table("users").get("1"))
         .should.not.eventually.exist;
     })
     
@@ -47,7 +52,7 @@ describe("Model", () => {
       });
       
       return user.save().should.eventually.be.fulfilled
-        .then(() => rethink.r.table("users").get("1"))
+        .then(() => query().table("users").get("1"))
         .should.eventually.exist.and.have.property("name").that.equals("James");
     })
     
@@ -57,7 +62,7 @@ describe("Model", () => {
           user.name = "Callum";
           return user.save();
         })
-        .then(() => rethink.r.table("users").get("1"))
+        .then(() => query().table("users").get("1"))
         .should.eventually.exist.and.have.property("name").that.equals("Callum");
     })
   })
