@@ -133,10 +133,10 @@ export class Model {
    * Returns a new instance of the Model without fields with the tag specified.
    * NOTE: This will freeze computed fields by default.
    */
-  public withoutFields(tag: string, freezeComputed: boolean = true): this {
+  public withoutFields(...excludedTags: string[]): this {
     if (!this._tags) throw new Error("Not tags defined");
     
-    const fields = this.getFields(freezeComputed);
+    const fields = this.getFields(true);
     
     let returnData = {};
     for (let i = 0, len = fields.length; i < len; i++) {
@@ -144,7 +144,7 @@ export class Model {
       const tags = this._tags[key];
       
       // If this key does not have the tag.
-      if (!tags || tags.indexOf(tag) === -1) {
+      if (!tags || _.intersection(tags, excludedTags).length === 0) {
         returnData[key] = this[key];
       }
     }
@@ -156,10 +156,10 @@ export class Model {
    * Returns a new instance of the Model only with the fields with the tag specified.
    * NOTE: This will freeze computed fields by default.
    */
-  public withFields(tag: string, freezeComputed: boolean = true): this {
+  public withFields(...includedTags: string[]): this {
     if (!this._tags) throw new Error("Not tags defined");
     
-    const fields = this.getFields(freezeComputed);
+    const fields = this.getFields(true);
     
     let returnData = {};
     for (let i = 0, len = fields.length; i < len; i++) {
@@ -167,7 +167,7 @@ export class Model {
       const tags = this._tags[key];
       
       // If this key has the tag.
-      if (tags && tags.indexOf(tag) > -1) {
+      if (tags && _.intersection(tags, excludedTags).length > 0) {
         returnData[key] = this[key];
       }
     }
