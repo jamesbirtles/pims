@@ -2,7 +2,7 @@ import * as _ from "lodash";
 import * as Promise from "bluebird";
 import {Term} from "rethinkdbdash";
 import {RethinkConnection} from "./connection";
-import {SchemaError} from "./validators/schema";
+import {OperatorResponse, SchemaFunc} from "./validators/schema";
 
 export interface RelationMap {
   [key: string]: {
@@ -22,7 +22,7 @@ export class Model {
   _computedFields;
   _relations: RelationMap;
   _schemaRaw;
-  _schema: (input: any) => SchemaError;
+  _schema: SchemaFunc;
   _conn: RethinkConnection;
   _pk: string;
   _table: string;
@@ -68,14 +68,14 @@ export class Model {
   }
 
   public save(): Promise<this> {
-    const changes = this.getChangedKeys();
-    if (changes.length === 0) {
-      return Promise.resolve(this);
-    }
-    
     const validation = this.validate();
     if (!validation.valid) {
       return Promise.reject(validation);
+    }
+    
+    const changes = this.getChangedKeys();
+    if (changes.length === 0) {
+      return Promise.resolve(this);
     }
 
     const changed = {};
@@ -175,8 +175,8 @@ export class Model {
     return new (<typeof Model> this.constructor)(returnData) as this;
   }
 
-  public validate(): SchemaError {
-    return this._schema(this.getRaw());
+  public validate(): OperatorResponse {
+    return this._schema(this.getRaw(), this);
   }
   
   public getRaw() {

@@ -4,12 +4,12 @@ import * as pluralise from "pluralize";
 import * as _ from "lodash";
 import { Model } from "./model";
 
-export function Field(...validators: any[]): PropertyDecorator  {
+export function Field(...operations: any[]): PropertyDecorator  {
   return function (target: any, key: string) {
     target._schemaRaw = target._schemaRaw || {};
     
     const type = Reflect.getMetadata("design:type", target, key);
-    target._schemaRaw[key] = [ type, ...validators ];
+    target._schemaRaw[key] = [ type, ...operations ];
     
     return target;
   }

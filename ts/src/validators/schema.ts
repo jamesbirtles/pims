@@ -1,8 +1,8 @@
-function isSchema(arg: ValidatorType | SchemaFunc): arg is SchemaFunc {
+function isSchema(arg: OperationType | SchemaFunc): arg is SchemaFunc {
   return typeof arg === "function";
 }
 
-function addError(key: string, targetError: SchemaError, sourceError: SchemaError) {
+function addError(key: string, targetError: OperatorResponse, sourceError: OperatorResponse) {
   targetError.valid = false;
   if (sourceError.errors != null) {
     for (let i = 0, len = sourceError.errors.length; i < len; i++) {
@@ -15,8 +15,8 @@ function addError(key: string, targetError: SchemaError, sourceError: SchemaErro
 }
 
 export function Schema(schema: SchemaType) {
-  return function (input: any): SchemaError {
-    const errors: SchemaError = {
+  return function (input: any, target: any): OperatorResponse {
+    const errors: OperatorResponse = {
       input,
       valid: true,
       errors: []
@@ -25,22 +25,25 @@ export function Schema(schema: SchemaType) {
     const schemaKeys = Object.keys(schema);
     for (let i = 0, len = schemaKeys.length; i < len; i++) {
       let key = schemaKeys[i];
-      let value: ValidatorType | SchemaFunc = schema[key];
+      let value: OperationType | SchemaFunc = schema[key];
 
       if (isSchema(value)) {
-        let res: SchemaError = value(input[key]);
+        let res: OperatorResponse = value(input[key], target[key]);
         if (!res.valid) {
           console.log("Invalid schema", key);
           addError(key, errors, res);
         }
       } else {
-        const [type, ...validators] = value;
+        const [type, ...operations] = value;
 
         // TODO: Validate type
 
-        for (let j = 0, lenj = validators.length; j < lenj; j++) {
-          let res = validators[j](input[key]);
-          if (!res.valid) {
+        for (let j = 0, lenj = operations.length; j < lenj; j++) {
+          let res = operations[j](input[key], target);
+          if (res.transform) {
+            target[key] = res.value;
+            input[key] = res.value;
+          } else if (!res.valid) {
             addError(key, errors, res);
           }
         }
@@ -51,23 +54,26 @@ export function Schema(schema: SchemaType) {
   }
 }
 
-export interface SchemaError {
+export interface OperatorResponse {
+  transform?: boolean;
+  value?: any;
+
   key?: string;
-  valid: boolean;
-  input: any;
+  valid?: boolean;
+  input?: any;
   error?: {
     message: string;
     args?: any[]
   }
-  errors?: SchemaError[];
+  errors?: OperatorResponse[];
 }
 
 export interface SchemaType {
   [key: string]: any | SchemaFunc;
 }
 
-export interface ValidatorType extends Array<(input: string) => SchemaError> {
+export interface OperationType extends Array<(input: string, model?: any) => OperatorResponse> {
   0: any;
 }
 
-export type SchemaFunc = (schema: SchemaType) => SchemaError;
+export type SchemaFunc = (schema: SchemaType, target: any) => OperatorResponse;

@@ -89,30 +89,30 @@ describe("Validators", () => {
     });
 
     it("returns a validation response", () => {
-      const validation = validator({firstName: "James", lastName: "Birtles"});
+      const validation = validator({firstName: "James", lastName: "Birtles"}, {});
       validation.should.have.property("valid");
       validation.should.have.property("input");
       validation.should.have.property("errors");
     })
     
     it("allows valid schema values", () => {
-      validator({firstName: "James", lastName: "Birtles"}).should.have.property("valid").that.is.true;
+      validator({firstName: "James", lastName: "Birtles"}, {}).should.have.property("valid").that.is.true;
     })
     
     it("allows missing keys", () => {
-      validator({firstName: "James"}).should.have.property("valid").that.is.true;
+      validator({firstName: "James"}, {}).should.have.property("valid").that.is.true;
     })
     
     it("denies values with extraneous keys", () => {
-      validator({firstName: "James", lastName: "Birtles", middleName: "Henry"}).should.have.property("valid").that.is.false;
+      validator({firstName: "James", lastName: "Birtles", middleName: "Henry"}, {}).should.have.property("valid").that.is.false;
     })
     
     it("denies values of wrong type", () => {
-      validator({firstName: false, lastName: "Birtles"}).should.have.property("valid").that.is.false;
+      validator({firstName: false, lastName: "Birtles"}, {}).should.have.property("valid").that.is.false;
     })
     
     it("denies values that do not meet sub validations", () => {
-      validator({lastName: "Birtles"}).should.have.property("valid").that.is.false;
+      validator({lastName: "Birtles"}, {}).should.have.property("valid").that.is.false;
     })
   })
 })
