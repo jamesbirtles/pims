@@ -40,6 +40,11 @@ export class Model {
     }
   }
   
+  public static all<T extends Model>(): Promise<T[]> {
+    return this.prototype.query().run()
+      .map(res => new this(res, false));
+  }
+  
   public static get<T extends Model>(id: string, index?: string): Promise<T> {
     let q: any = this.prototype.query();
     if (index) {
@@ -57,10 +62,12 @@ export class Model {
       .map(res => new this(res, false))
   }
   
-  public static find<T extends Model>(query: any): Promise<T[]> {
-    const q: any = this.prototype.query();
-    return q.filter(query).run()
-      .map(res => new this(res, false));
+  public static find<T extends Model>(query: any, limit?: number): Promise<T[]> {
+    let q = this.prototype.query().filter(query);
+    if (limit) {
+      q = q.limit(limit);
+    }
+    return q.run().map(res => new this(res, false));
   }
 
   public query(): Term {
