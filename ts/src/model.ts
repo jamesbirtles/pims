@@ -45,10 +45,15 @@ export class Model {
       .map(res => new this(res, false));
   }
   
-  public static get<T extends Model>(id: any | any[], index?: string): Promise<T> {
+  public static get<T extends Model>(id: any | any[], opts?: string | CollectionOpts): Promise<T> {
     let q: any = this.prototype.query();
-    if (index) {
-      q = q.getAll(id, {index: index}).run().then(data => data[0]);
+    const options: CollectionOpts = this._getCollectionOptions(opts);
+    
+    if (options.index) {
+      q = q.getAll(id, {index: options.index});
+      if (options.predicate) q = options.predicate(q);
+      
+      q = q.run().then(data => data[0]);
     } else {
       q = q.get(id).run();
     }
@@ -56,10 +61,14 @@ export class Model {
     return q.then(data => data ? new this(data, false) : null);
   }
   
-  public static getAll<T extends Model>(id: any | any[], index?: string): Promise<T> {
-    const q: any = this.prototype.query();
-    return q.getAll(id, {index: index}).run()
-      .map(res => new this(res, false));
+  public static getAll<T extends Model>(id: any | any[], opts?: string | CollectionOpts): Promise<T> {
+    let q: any = this.prototype.query();
+    const options: CollectionOpts = this._getCollectionOptions(opts);
+    
+    q = q.getAll(id, {index: options.index});
+    if (options.predicate) q = options.predicate(q);
+    
+    return q.run().map(res => new this(res, false));
   }
   
   public static find<T extends Model>(query: any, limit?: number): Promise<T[]> {
@@ -68,6 +77,19 @@ export class Model {
       q = q.limit(limit);
     }
     return q.run().map(res => new this(res, false));
+  }
+  
+  private static _getCollectionOptions(opts: string | CollectionOpts) {
+    const options: CollectionOpts = {};
+    if (_.isString(opts)) {
+      const index: string = opts;
+      options.index = index;
+    } else if (_.isPlainObject(opts)) {
+      _.assign(options, opts);
+    }
+    
+    
+    return options;
   }
 
   public query(): Term {
@@ -266,3 +288,8 @@ export class Model {
 }
 
 Model.prototype._pk = "id";
+
+export interface CollectionOpts {
+  index?: string;
+  predicate?: (q: any) => any;
+}
