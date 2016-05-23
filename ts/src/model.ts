@@ -45,7 +45,7 @@ export class Model {
       .map(res => new this(res, false));
   }
   
-  public static get<T extends Model>(id: string, index?: string): Promise<T> {
+  public static get<T extends Model>(id: any | any[], index?: string): Promise<T> {
     let q: any = this.prototype.query();
     if (index) {
       q = q.getAll(id, {index: index}).run().then(data => data[0]);
@@ -56,10 +56,10 @@ export class Model {
     return q.then(data => data ? new this(data, false) : null);
   }
   
-  public static getAll<T extends Model>(id: string, index?: string): Promise<T> {
+  public static getAll<T extends Model>(id: any | any[], index?: string): Promise<T> {
     const q: any = this.prototype.query();
     return q.getAll(id, {index: index}).run()
-      .map(res => new this(res, false))
+      .map(res => new this(res, false));
   }
   
   public static find<T extends Model>(query: any, limit?: number): Promise<T[]> {
