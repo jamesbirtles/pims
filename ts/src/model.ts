@@ -1,8 +1,8 @@
 import * as _ from "lodash";
 import * as Promise from "bluebird";
-import {Term} from "rethinkdbdash";
-import {RethinkConnection} from "./connection";
-import {OperatorResponse, SchemaFunc} from "./validators/schema";
+import { Term } from "rethinkdbdash";
+import { RethinkConnection } from "./connection";
+import { OperatorResponse, SchemaFunc } from "./validators/schema";
 
 export interface RelationMap {
   [key: string]: {
@@ -122,6 +122,10 @@ export class Model {
       })
   }
 
+  public delete(): Promise<this> {
+    return this.query().get(this[this._pk]).delete().run();
+  }
+
   public join(key: string, mapFunction: (model: Model) => Model | Promise<Model> = model => model): Promise<this> {
     if (!this._relations) return Promise.reject(new Error(`No relation found for '${key}'`));
     
@@ -141,7 +145,6 @@ export class Model {
         } else {
           model = this._conn.getModel(relation.modelName);
         }
-        let q: any = model.prototype.query();
         
         if (relation.type === "hasMany") {
           return model.getAll(this[this._pk], relation.field)

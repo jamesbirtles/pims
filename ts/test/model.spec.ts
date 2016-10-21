@@ -66,4 +66,13 @@ describe("Model", () => {
         .should.eventually.exist.and.have.property("name").that.equals("Callum");
     })
   })
+
+  describe("Delete", () => {
+    it("Deletes document", () => {
+      return User.get<User>("1")
+        .then(user => user.delete())
+        .then(() => query().table("users").get("1"))
+        .should.eventually.not.exist;
+    })
+  })
 })

@@ -16,7 +16,7 @@ export function Field(...operations: any[]): PropertyDecorator  {
 }
 
 /**
- * NOTE: Explicity setting the value of a computed field will freeze the field to that value.
+ * NOTE: Explicitly setting the value of a computed field will freeze the field to that value.
  */
 export function ComputedField<T extends Model>(func: (model: T) => any): PropertyDecorator {
   return function (target: any, key: string) {

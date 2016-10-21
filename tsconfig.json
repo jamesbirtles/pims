@@ -1,17 +1,16 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es5",
+    "moduleResolution": "node",
+    "target": "es6",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "sourceMap": false,
     "noImplicitAny": false,
-    "outDir": "../js",
+    "outDir": "./js",
     "declaration": true
   },
   "exclude": [
-    "node_modules",
-    "typings/browser",
-    "typings/browser.d.ts"
+    "node_modules"
   ]
 }
