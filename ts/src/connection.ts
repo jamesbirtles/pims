@@ -1,8 +1,10 @@
+import * as Promise from "bluebird";
 import * as RethinkDBDash from "rethinkdbdash";
 import * as pluralise from "pluralize";
 import * as _ from "lodash";
-import {Validators} from "../";
-import {Model} from "./model";
+
+import { Validators } from "../";
+import { Model } from "./model";
 
 export class RethinkConnection {
   public r: RethinkDBDash.Term;

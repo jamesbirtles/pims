@@ -4,4 +4,4 @@ import * as Transforms from "./src/transforms";
 export * from "./src/model";
 export * from "./src/connection";
 export * from "./src/field";
-export {Validators, Transforms};
+export { Validators, Transforms };
