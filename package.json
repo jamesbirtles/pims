@@ -7,7 +7,8 @@
   "scripts": {
     "tsc": "cd ts && tsc",
     "test": "npm run tsc && cd js && mocha"
-  },  "repository": {
+  },
+  "repository": {
     "type": "git",
     "url": "git+https://github.com/UnwrittenFun/rethinkts.git"
   },
