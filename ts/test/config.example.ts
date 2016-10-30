@@ -1,3 +1,4 @@
+// TODO: wtf
 export const config = {
   db: "rethinkts_testing",
   rethink: {

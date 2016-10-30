@@ -40,4 +40,4 @@ describe("Model Fields", () => {
       should.equal(user.agePlus20, 30);
     })
   })
-})
+});

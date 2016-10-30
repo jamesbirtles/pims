@@ -8,7 +8,11 @@
     "sourceMap": false,
     "noImplicitAny": false,
     "outDir": "./js",
-    "declaration": true
+    "declaration": true,
+    "lib": [
+      "es2015",
+      "es2015.reflect"
+    ]
   },
   "exclude": [
     "node_modules"

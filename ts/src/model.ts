@@ -1,5 +1,4 @@
 import * as _ from "lodash";
-import * as Promise from "bluebird";
 import { Term } from "rethinkdbdash";
 import { RethinkConnection } from "./connection";
 import { OperatorResponse, SchemaFunc } from "./validators/schema";

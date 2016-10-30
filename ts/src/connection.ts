@@ -1,4 +1,3 @@
-import * as Promise from "bluebird";
 import * as RethinkDBDash from "rethinkdbdash";
 import * as pluralise from "pluralize";
 import * as _ from "lodash";
