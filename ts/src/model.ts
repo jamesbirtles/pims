@@ -60,7 +60,7 @@ export class Model {
     return q.then(data => data ? new this(data, false) : null);
   }
   
-  public static getAll<T extends Model>(id: any | any[], opts?: string | CollectionOpts): Promise<T> {
+  public static getAll<T extends Model>(id: any | any[], opts?: string | CollectionOpts): Promise<T[]> {
     let q: any = this.prototype.query();
     const options: CollectionOpts = this._getCollectionOptions(opts);
     
