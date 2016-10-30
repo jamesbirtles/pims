@@ -80,8 +80,7 @@ export class Model {
   }
 
   public static changes<T extends Model>(opts: ChangesOpts = {}): Promise<ChangesFeed<T>> {
-    let q = this.prototype.query().changes(opts);
-    return q.run();
+    return this.prototype.query().changes(opts).run();
   }
   
   private static _getCollectionOptions(opts: string | CollectionOpts) {
@@ -312,9 +311,11 @@ export interface ChangesOpts {
 }
 
 export interface ChangesFeed<T extends Model> {
-  each: (callback: (document: {
-    old_val: T;
-    new_val: T;
-    state?: string;
-  }) => any) => any;
+  each: (callback: (document: DocumentChange<T>) => any) => any;
+}
+
+export interface DocumentChange<T extends Model> {
+  old_val: T;
+  new_val: T;
+  state?: string;
 }
