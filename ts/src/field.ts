@@ -1,6 +1,3 @@
-/// <reference path="../../node_modules/reflect-metadata/reflect-metadata.d.ts" />
-
-import * as pluralise from "pluralize";
 import * as _ from "lodash";
 import { Model } from "./model";
 
