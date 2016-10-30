@@ -78,6 +78,10 @@ export class Model {
     }
     return q.run().map(res => new this(res, false));
   }
+
+  public static changes<T extends Model>(opts: ChangesOpts = {}): Promise<ChangesFeed<T>> {
+    return this.prototype.query().changes(opts).run();
+  }
   
   private static _getCollectionOptions(opts: string | CollectionOpts) {
     const options: CollectionOpts = {};
@@ -295,4 +299,23 @@ Model.prototype._pk = "id";
 export interface CollectionOpts {
   index?: string;
   predicate?: (q: any) => any;
+}
+
+export interface ChangesOpts {
+  squash?: boolean | number;
+  changefeed_queue_size?: number;
+  include_initial?: boolean;
+  include_states?: boolean;
+  include_offsets?: boolean;
+  include_types?: boolean;
+}
+
+export interface ChangesFeed<T extends Model> {
+  each: (callback: (document: DocumentChange<T>) => any) => any;
+}
+
+export interface DocumentChange<T extends Model> {
+  old_val: T;
+  new_val: T;
+  state?: string;
 }
