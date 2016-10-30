@@ -311,10 +311,10 @@ export interface ChangesOpts {
 }
 
 export interface ChangesFeed<T extends Model> {
-  each: (callback: (document: DocumentChange<T>) => any) => any;
+  each: (callback: (err: Error, cursor: DocumentCursor<T>) => any) => any;
 }
 
-export interface DocumentChange<T extends Model> {
+export interface DocumentCursor<T extends Model> {
   old_val: T;
   new_val: T;
   state?: string;
