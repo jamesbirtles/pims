@@ -31,11 +31,11 @@ export class Model {
   constructor(data: any = {}, isNew = true) {
     this._defineProperties();
     if (isNew) {
-      this._prev = this.getRaw();
+      this._prev = _.cloneDeep(this.getRaw());
       this.assign(data);
     } else {
       this.assign(data);
-      this._prev = this.getRaw();
+      this._prev = _.cloneDeep(this.getRaw());
     }
   }
   
@@ -112,7 +112,7 @@ export class Model {
 
     const changed = {};
     for (let i = 0, len = changes.length; i < len; i++) {
-      this._prev[changes[i]] = this[changes[i]];
+      this._prev[changes[i]] = _.cloneDeep(this[changes[i]]);
       changed[changes[i]] = this[changes[i]];
     }
     
