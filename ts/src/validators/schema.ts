@@ -22,33 +22,31 @@ export function Schema(schema: SchemaType) {
       errors: []
     }
 
-    const schemaKeys = Object.keys(schema);
-    for (let i = 0, len = schemaKeys.length; i < len; i++) {
-      let key = schemaKeys[i];
-      let value: OperationType | SchemaFunc = schema[key];
+    Object.keys(schema).forEach(key => {
+      const value: OperationType | SchemaFunc = schema[key];
 
       if (isSchema(value)) {
-        let res: OperatorResponse = value(input[key], target[key]);
+        const res: OperatorResponse = value(input[key], target[key]);
         if (!res.valid) {
-          console.log("Invalid schema", key);
           addError(key, errors, res);
         }
-      } else {
-        const [type, ...operations] = value;
-
-        // TODO: Validate type
-
-        for (let j = 0, lenj = operations.length; j < lenj; j++) {
-          let res = operations[j](input[key], target);
-          if (res.transform) {
-            target[key] = res.value;
-            input[key] = res.value;
-          } else if (!res.valid) {
-            addError(key, errors, res);
-          }
-        }
+        return;
       }
-    }
+
+      const [type, ...operations] = value;
+
+      // TODO: Validate type
+
+      operations.forEach(operation => {
+        const res = operation(input[key], target);
+        if (res.transform) {
+          target[key] = res.value;
+          input[key] = res.value;
+        } else if (!res.valid) {
+          addError(key, errors, res);
+        }
+      });
+    });
 
     return errors;
   }
