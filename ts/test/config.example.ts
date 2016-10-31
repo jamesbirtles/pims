@@ -1,8 +1,8 @@
 // TODO: wtf
 export const config = {
-  db: "rethinkts_testing",
-  rethink: {
-    host: "localhost",
-    port: 28015
-  }
+    db: 'rethinkts_testing',
+    rethink: {
+        host: 'localhost',
+        port: 28015
+    }
 };

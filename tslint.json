@@ -1,0 +1,29 @@
+{
+    "extends": "tslint-microsoft-contrib",
+    "rulesDirectory": [
+        "node_modules/tslint-microsoft-contrib"
+    ],
+    "rules": {
+        "no-for-in-array": false,
+        "restrict-plus-operands": false,
+        "missing-jsdoc": false,
+        "no-any": false,
+        "function-name": false,
+        "export-name": false,
+        "no-relative-imports": false,
+        "no-reserved-keywords": false,
+        "no-multiline-string": false,
+        "no-backbone-get-set-outside-model": false,
+        "variable-name": [
+            false
+        ],
+        "interface-name": [
+            true,
+            "never-prefix"
+        ],
+        "indent": [
+            true,
+            "spaces"
+        ]
+    }
+}
