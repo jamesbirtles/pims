@@ -1,4 +1,4 @@
-import { cloneDeep, intersection, isEqual, isPlainObject, isString } from 'lodash';
+import { cloneDeep, intersection, isEqual, isPlainObject, isString, reduce } from 'lodash';
 import { Term } from 'rethinkdbdash';
 
 import { RethinkConnection } from './connection';
@@ -245,7 +245,8 @@ export class Model {
     }
 
     public getChangedKeys() {
-        return this._prev.reduce(
+        return reduce(
+            this._prev,
             (result, value, key) => {
                 return isEqual(value, this[key]) ? result : result.concat(key);
             },

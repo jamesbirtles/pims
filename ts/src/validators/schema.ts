@@ -1,3 +1,5 @@
+import { Type } from './type';
+
 function isSchema(arg: OperationType | SchemaFunc): arg is SchemaFunc {
     return typeof arg === 'function';
 }
@@ -33,9 +35,9 @@ export function Schema(schema: SchemaType): (input: any, target: any) => Operato
                 return;
             }
 
-            const [, ...operations] = value;
+            const [type, ...operations] = value;
 
-            // TODO: Validate type
+            operations.push(Type(type));
 
             operations.forEach(operation => {
                 const res = operation(input[key], target);
