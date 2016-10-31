@@ -210,6 +210,16 @@ export class Model {
     return new (<typeof Model> this.constructor)(returnData) as this;
   }
 
+  public getTaggedFields(...includedTags: string[]) {
+    if (!this._tags) throw new Error("Not tags defined");
+    const fields = this.getFields(true);
+
+    return fields.filter(field => {
+      const tags = this._tags[field] || [];
+      return _.intersection(tags, includedTags).length > 0;
+    });
+  }
+
   public validate(): OperatorResponse {
     return this._schema(this.getRaw(), this);
   }
