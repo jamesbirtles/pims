@@ -10,7 +10,37 @@ export interface RelationMap {
         field: string;
         modelName?: string;
         modelFactory: (model: Model) => typeof Model | string;
-    }
+    };
+}
+
+export interface PredicateOpts {
+    predicate?: (q: any) => any;
+}
+
+export interface CollectionOpts extends PredicateOpts {
+    index?: string;
+}
+
+export interface FindOpts extends PredicateOpts {
+}
+
+export interface ChangesOpts {
+    squash?: boolean | number;
+    changefeed_queue_size?: number;
+    include_initial?: boolean;
+    include_states?: boolean;
+    include_offsets?: boolean;
+    include_types?: boolean;
+}
+
+export interface ChangesFeed<T extends Model> {
+    each: (callback: (err: Error, cursor: DocumentCursor<T>) => any) => any;
+}
+
+export interface DocumentCursor<T extends Model> {
+    old_val: T;
+    new_val: T;
+    state?: string;
 }
 
 export interface TagMap {
@@ -40,17 +70,25 @@ export class Model {
         }
     }
 
+    /**
+     * Fetch all models in this table.
+     */
     public static all<T extends Model>(): Promise<T[]> {
         return this.prototype.query().run()
             .map(res => new this(res, false));
     }
 
+    /**
+     * Gets the first model matching the given primary or secondary index.
+     * Compound indexes may be used by passing an array as the id.
+     * See: https://www.rethinkdb.com/docs/secondary-indexes/javascript/#compound-indexes
+     */
     public static get<T extends Model>(id: any | any[], opts?: string | CollectionOpts): Promise<T> {
         let q: any = this.prototype.query();
         const options: CollectionOpts = this._getCollectionOptions(opts);
 
         if (options.index) {
-            q = q.getAll(id, {index: options.index});
+            q = q.getAll(id, { index: options.index }).limit(1);
             if (options.predicate) {
                 q = options.predicate(q);
             }
@@ -63,11 +101,16 @@ export class Model {
         return q.then(data => data ? new this(data, false) : null);
     }
 
+    /**
+     * Get all models matching the given secondary index.
+     * Compound indexes may be used by passing an array as the id.
+     * See: https://www.rethinkdb.com/docs/secondary-indexes/javascript/#compound-indexes
+     */
     public static getAll<T extends Model>(id: any | any[], opts?: string | CollectionOpts): Promise<T[]> {
         let q: any = this.prototype.query();
         const options: CollectionOpts = this._getCollectionOptions(opts);
 
-        q = q.getAll(id, {index: options.index});
+        q = q.getAll(id, { index: options.index });
         if (options.predicate) {
             q = options.predicate(q);
         }
@@ -75,12 +118,26 @@ export class Model {
         return q.run().map(res => new this(res, false));
     }
 
-    public static find<T extends Model>(query: any, limit?: number): Promise<T[]> {
+    /**
+     * Find models matching the given filter query.
+     */
+    public static find<T extends Model>(query: any, options: FindOpts = {}): Promise<T[]> {
         let q = this.prototype.query().filter(query);
-        if (limit) {
-            q = q.limit(limit);
+        if (options.predicate) {
+            q = options.predicate(q);
         }
         return q.run().map(res => new this(res, false));
+    }
+
+    /**
+     * Find one model matching the given filter query.
+     */
+    public static findOne<T extends Model>(query: any, options: FindOpts = {}): Promise<T> {
+        let q = this.prototype.query().filter(query).limit(1);
+        if (options.predicate) {
+            q = options.predicate(q);
+        }
+        return q.run().then(results => results.length && new this(results[0], false));
     }
 
     public static changes<T extends Model>(opts: ChangesOpts = {}): Promise<ChangesFeed<T>> {
@@ -319,26 +376,3 @@ export class Model {
 
 Model.prototype._pk = 'id';
 
-export interface CollectionOpts {
-    index?: string;
-    predicate?: (q: any) => any;
-}
-
-export interface ChangesOpts {
-    squash?: boolean | number;
-    changefeed_queue_size?: number;
-    include_initial?: boolean;
-    include_states?: boolean;
-    include_offsets?: boolean;
-    include_types?: boolean;
-}
-
-export interface ChangesFeed<T extends Model> {
-    each: (callback: (err: Error, cursor: DocumentCursor<T>) => any) => any;
-}
-
-export interface DocumentCursor<T extends Model> {
-    old_val: T;
-    new_val: T;
-    state?: string;
-}
