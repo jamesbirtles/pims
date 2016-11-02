@@ -24,6 +24,11 @@ export function Schema(schema: SchemaType): (input: any, target: any) => Operato
             errors: []
         };
 
+        // Assume empty input is valid
+        if (input == null) {
+            return errors;
+        }
+
         Object.keys(schema).forEach(key => {
             const value: OperationType | SchemaFunc = schema[key];
 
