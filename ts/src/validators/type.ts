@@ -10,6 +10,9 @@ function is(type: any, value: any) {
             return _.isDate(value);
         case Boolean:
             return _.isBoolean(value);
+        case Object:
+            // any is transpiled into Object, we can't type check this.
+            return true;
         default:
             return value instanceof type || typeof value === type;
     }
