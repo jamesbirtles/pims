@@ -32,11 +32,22 @@ export function LinkedField<T extends Model>(opts: string | LinkedFieldOptions<T
     return (target: any, key: string) => {
         target._relations = target._relations || {};
 
-        const type = Reflect.getMetadata('design:type', target, key) === Array ? 'hasMany' : 'belongsTo';
+        const isManyRelation = Reflect.getMetadata('design:type', target, key) === Array;
         const targetName = _.camelCase(target.constructor.name);
+
+        let field = targetName + 'Id';
+        let type = 'hasMany';
+        if (!isManyRelation) {
+            if (Reflect.hasMetadata('design:type', target, key + 'Id')) {
+                type = 'belongsTo';
+                field = key + 'Id';
+            } else {
+                type = 'hasOne';
+            }
+        }
+
         target._relations[key] = {
-            type,
-            field: type === 'hasMany' ? targetName + 'Id' : key + 'Id',
+            type, field
         };
 
         if (_.isString(opts)) {

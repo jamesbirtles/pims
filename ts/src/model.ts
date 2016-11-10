@@ -214,13 +214,16 @@ export class Model {
                     model = this._conn.getModel(relation.modelName);
                 }
 
-                if (relation.type === 'hasMany') {
-                    return model.getAll(this[this._pk], relation.field).map(mapFunction);
-                } else if (relation.type === 'belongsTo') {
-                    return model.get(this[relation.field]).then(mapFunction);
+                switch (relation.type) {
+                    case 'hasMany':
+                        return model.getAll(this[this._pk], relation.field).map(mapFunction);
+                    case 'belongsTo':
+                        return model.get(this[relation.field]).then(mapFunction);
+                    case 'hasOne':
+                        return model.get(this[this._pk], relation.field).then(mapFunction);
+                    default:
+                        throw new Error(`Unknown relation type ${relation.type}`);
                 }
-
-                return Promise.reject(new Error(`Unknown relation type '${relation.type}'`));
             })
             .then(res => {
                 this[key] = res;
