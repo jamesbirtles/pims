@@ -88,12 +88,12 @@ export class Model {
         const options: CollectionOpts = this._getCollectionOptions(opts);
 
         if (options.index) {
-            q = q.getAll(id, { index: options.index }).limit(1);
+            q = q.getAll(id, { index: options.index });
             if (options.predicate) {
                 q = options.predicate(q);
             }
 
-            q = q.run().then(data => data[0]);
+            q = q.limit(1).run().then(data => data[0]);
         } else {
             q = q.get(id).run();
         }
