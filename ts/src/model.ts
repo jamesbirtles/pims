@@ -21,6 +21,7 @@ export interface CollectionOpts extends PredicateOpts {
     index?: string;
 }
 
+// tslint:disable-next-line:no-empty-interfaces
 export interface FindOpts extends PredicateOpts {
 }
 
@@ -59,7 +60,7 @@ export class Model {
     public _db: string;
     public _tags: TagMap;
 
-    constructor(data: any = {}, isNew = true) {
+    constructor(data: any = {}, isNew: boolean = true) {
         this._defineProperties();
         if (isNew) {
             this._prev = cloneDeep(this.getRaw());
@@ -73,9 +74,12 @@ export class Model {
     /**
      * Fetch all models in this table.
      */
-    public static all<T extends Model>(): Promise<T[]> {
-        return this.prototype.query().run()
-            .map(res => new this(res, false));
+    public static all<T extends Model>(options: PredicateOpts = {}): Promise<T[]> {
+        let q = this.prototype.query();
+        if (options.predicate) {
+            q = options.predicate(q);
+        }
+        return q.run().map(res => new this(res, false));
     }
 
     /**
