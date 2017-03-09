@@ -25,13 +25,13 @@ export class RethinkConnection {
         return this.models[name];
     }
 
-    public registerModel(TheModel: typeof Model, database: string = this.defaultDatabase): Promise<{ tables_created: number }> {
+    public registerModel(TheModel: typeof Model, database: string = this.defaultDatabase, opts: { table: string; } = {}): Promise<{ tables_created: number }> {
         if (!database) {
             throw new Error('No database specified');
         }
 
         const name = _.camelCase((<any>TheModel).name);
-        const table = pluralise(name);
+        const table = pluralise(opts.table || name);
 
         this.models[name] = TheModel;
 
