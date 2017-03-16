@@ -1,4 +1,3 @@
 node_modules/
-js/
-ts/typings/
-ts/test/config.ts
+dist/
+.vscode/

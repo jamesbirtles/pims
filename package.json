@@ -1,14 +1,13 @@
 {
   "name": "rethinkts",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "description": "A model system for RethinkDB, written in and for TypeScript.",
-  "main": "js/index.js",
-  "typings": "js/index",
+  "main": "dist/index.js",
+  "typings": "dist/index",
   "scripts": {
-    "build": "cd ts && tsc",
-    "watch": "cd ts && tsc -w",
-    "test": "npm run tsc && cd js && mocha",
-    "prepublish": "npm run build"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prepublish": "yarn run build"
   },
   "repository": {
     "type": "git",
@@ -27,25 +26,11 @@
     "url": "https://github.com/UnwrittenFun/rethinkts/issues"
   },
   "homepage": "https://github.com/UnwrittenFun/rethinkts#readme",
-  "dependencies": {
-    "lodash": "^4.16.4",
-    "pluralize": "^3.0.0",
-    "rethinkdbdash": "^2.3.23"
-  },
   "devDependencies": {
-    "@types/chai": "^3.4.34",
-    "@types/chai-as-promised": "0.0.29",
-    "@types/lodash": "^4.14.37",
-    "@types/mocha": "^2.2.32",
-    "@types/node": "^6.0.45",
-    "@types/pluralize": "0.0.27",
-    "@types/promises-a-plus": "0.0.27",
-    "chai": "^3.5.0",
-    "chai-as-promised": "^5.3.0",
-    "mocha": "^2.4.5",
-    "reflect-metadata": "0.1.8",
-    "tslint": "^3.15.1",
-    "tslint-microsoft-contrib": "^2.0.13",
-    "typescript": "^2.0.3"
+    "@types/node": "^7.0.8",
+    "typescript": "^2.2.1"
+  },
+  "dependencies": {
+    "rethinkdbdash": "^2.3.28"
   }
 }

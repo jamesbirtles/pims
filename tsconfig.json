@@ -5,16 +5,20 @@
     "target": "es6",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "noImplicitAny": false,
-    "outDir": "./js",
+    "outDir": "dist",
     "declaration": true,
     "lib": [
       "es2015",
-      "es2015.reflect"
-    ]
-  },
-  "exclude": [
-    "node_modules"
-  ]
+      "es2016.array.include"
+    ],
+    "typeRoots": [
+        "node_modules/@types"
+    ],
+    "baseUrl": ".",
+    "paths": {
+        "*": ["*", "./types"]
+    }
+  }
 }
