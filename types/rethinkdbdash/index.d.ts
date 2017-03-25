@@ -2,6 +2,8 @@ declare module "rethinkdbdash" {
     import { EventEmitter } from 'events';
 
     namespace RethinkDbDash {
+        export type PluckSelector = (string | { [field: string]: (PluckSelector | PluckSelector[]) });
+
         export interface ImportOptions {
             db?: string;
             user?: string;
@@ -40,13 +42,32 @@ declare module "rethinkdbdash" {
             get<T>(id: string): Term<T>;
             limit(limit: number): this;
             indexList(): Term<string[]>;
-            indexCreate(name: string, key: Row[]): Term<{ created: number }>;
+            indexCreate(name: string, key: Row[], opts?: any): Term<{ created: number }>;
             indexWait(...names: string[]): Term<any>;
             row(name: string): Row;
             forEach(fn: (arg: any) => void): Term<any>;
             map(fn: (arg: any) => any): Term<any>;
             contains(value: any): Term<boolean>;
             filter<T>(query: any): Term<T>;
+            insert(doc: Partial<U>, opts: InsertOpts<U>): Term<{
+                deleted: number;
+                errors: number;
+                inserted: number;
+                replaced: number;
+                skipped: number;
+                unchanged: number;
+                generated_keys?: string[];
+                changes?: ChangeDoc<U>[];
+            }>;
+            delete(): Term<{
+                deleted: number;
+                errors: number;
+                inserted: number;
+                replaced: number;
+                skipped: number;
+                unchanged: number;
+            }>;
+            pluck(...fields: PluckSelector[]): Term<U>;
         }
 
         export interface PoolMaster extends EventEmitter {
@@ -65,6 +86,17 @@ declare module "rethinkdbdash" {
 
         export interface Row {
             (name: string): Row;
+        }
+
+        export interface InsertOpts<T> {
+            durability?: 'hard' | 'soft';
+            returnChanges?: boolean | 'always';
+            conflict?: 'error' | 'replace' | 'update' | ((id: string, oldDoc: Partial<T>, newDoc: Partial<T>) => Partial<T>);
+        }
+
+        export interface ChangeDoc<T> {
+            old_val?: Partial<T>;
+            new_val?: Partial<T>;
         }
     }
 

@@ -1,6 +1,10 @@
+import { Term } from 'rethinkdbdash';
+
 import { ColumnInfo } from './column';
 import { assignWithArrays, pick as _pick } from './utils';
 import { RethinkAdapter } from './adapter';
+import { Hooks } from './hooks';
+import { RelationshipInfo } from './relationships';
 
 export const modelInfoKey = Symbol('rethink model info');
 
@@ -10,7 +14,11 @@ export interface ModelCtor<T> {
 
 export interface IndexInfo {
     name: string;
-    keys: string[];
+    keys: string[] | ((r: Term<any>) => any);
+    options?: {
+        multi?: boolean;
+        geo?: boolean;
+    }
 }
 
 export interface ModelInfo {
@@ -20,12 +28,14 @@ export interface ModelInfo {
     indexes: IndexInfo[];
     primaryKey: string;
     tags: Map<string, Set<string>>;
+    relationships: RelationshipInfo[];
 }
 
-export function createModelInfo(target: ModelCtor<any>, ...objs: Partial<ModelInfo>[]) {
+export function createModelInfo(target: ModelCtor<any>, ...objs: Partial<ModelInfo>[]): ModelInfo {
     return target[modelInfoKey] = assignWithArrays(<Partial<ModelInfo>> {
         columns: [],
         indexes: [],
+        relationships: [],
         primaryKey: 'id',
         tags: new Map<string, Set<string>>(),
     }, target[modelInfoKey], ...objs);
@@ -37,12 +47,48 @@ export function createModelInfo(target: ModelCtor<any>, ...objs: Partial<ModelIn
 export function Model(info: Partial<ModelInfo>): ClassDecorator {
     return (target: ModelCtor<any>) => {
         const modelInfo = createModelInfo(target, info);
+
+        target.prototype.toJSON = function () {
+            return [...modelInfo.columns, ...modelInfo.relationships]
+                .filter(column => this[column.key] !== undefined)
+                .reduce((t, column) => ({ ...t, [column.key]: this[column.key] }), {});
+        };
     };
+}
+
+function getKeys(ctor: ModelCtor<any>, tagsOrKeys: string[] | string): string[] {
+    const modelTags = Model.getInfo(ctor).tags;
+
+    let keys: string[];
+    if (Array.isArray(tagsOrKeys)) {
+        keys = tagsOrKeys;
+    } else {
+        keys = [tagsOrKeys];
+    }
+
+    return keys.reduce((keys, tagOrKey) => {
+        if (modelTags.has(tagOrKey)) {
+            return [...keys, ...modelTags.get(tagOrKey)];
+        }
+
+        return [...keys, tagOrKey];
+    }, []);
 }
 
 export namespace Model {
     export function construct<M>(ctor: ModelCtor<M>, data: Partial<M>): M {
-        return Object.assign(new ctor(), data);
+        return Model.assign(new ctor(), data);
+    }
+
+    export function assign<M>(model: M, ...sources: Partial<M>[]): M {
+        return Object.assign(model, ...sources);
+    }
+
+    export function pickAssign<M>(model: M, tagsOrKeys: string[] | string, ...sources: Partial<M>[]): M {
+        const ctor = <ModelCtor<M>> model.constructor;
+        const keys = getKeys(ctor, tagsOrKeys) as Array<keyof M>;
+
+        return Model.assign(model, ...sources.map(source => _pick(source, ...keys)));
     }
 
     export function pick<M>(model: M, ...tagsOrKeys: string[]): Partial<M> {
@@ -62,15 +108,8 @@ export namespace Model {
 
     export function without<M>(model: M, ...tagsOrKeys: string[]): Partial<M> {
         const ctor = <ModelCtor<M>> model.constructor;
-        const modelTags = Model.getInfo(ctor).tags;
 
-        const keys = tagsOrKeys.reduce((keys, tagOrKey) => {
-            if (modelTags.has(tagOrKey)) {
-                return [...keys, ...modelTags.get(tagOrKey)];
-            }
-
-            return [...keys, tagOrKey];
-        }, []);
+        const keys = getKeys(ctor, tagsOrKeys);
 
         const pickKeys = Object.keys(model)
             .filter(key => !keys.includes(key));
@@ -80,5 +119,11 @@ export namespace Model {
 
     export function getInfo(ctor: ModelCtor<any>): ModelInfo {
         return ctor[modelInfoKey];
+    }
+
+    export function notify(model: any, hook: Hooks, ...args: any[]): any {
+        if (model[hook]) {
+            return model[hook](...args);
+        }
     }
 }
