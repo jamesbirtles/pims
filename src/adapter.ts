@@ -95,7 +95,7 @@ export class RethinkAdapter {
         return predicates.reduce((q, predicate) => (predicate || (() => q))(q), this.getModelQuery(ctor));
     }
 
-    public changes<T>(ctor: ModelCtor<T>, opts?: rethinkdb.ChangeOpts) {
+    public changes<T>(ctor: ModelCtor<T>, opts: rethinkdb.ChangeOpts = {}) {
         return this.getModelQuery(ctor).changes<T>(opts);
     }
 
