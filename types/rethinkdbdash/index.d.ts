@@ -57,7 +57,7 @@ declare module "rethinkdbdash" {
                 skipped: number;
                 unchanged: number;
                 generated_keys?: string[];
-                changes?: ChangeDoc<U>[];
+                changes?: DocumentCursor<U>[];
             }>;
             delete(): Term<{
                 deleted: number;
@@ -68,6 +68,7 @@ declare module "rethinkdbdash" {
                 unchanged: number;
             }>;
             pluck(...fields: PluckSelector[]): Term<U>;
+            changes<T>(opts?: ChangeOpts): Promise<ChangesFeed<T>>;
         }
 
         export interface PoolMaster extends EventEmitter {
@@ -94,9 +95,23 @@ declare module "rethinkdbdash" {
             conflict?: 'error' | 'replace' | 'update' | ((id: string, oldDoc: Partial<T>, newDoc: Partial<T>) => Partial<T>);
         }
 
-        export interface ChangeDoc<T> {
-            old_val?: Partial<T>;
-            new_val?: Partial<T>;
+        export interface ChangeOpts {
+            squash?: boolean | number;
+            changefeed_queue_size?: number;
+            include_initial?: boolean;
+            include_states?: boolean;
+            include_offsets?: boolean;
+            include_types?: boolean;
+        }
+
+        export interface ChangesFeed<T> {
+            each: (callback: (err: Error, cursor: DocumentCursor<T>) => any) => any;
+        }
+
+        export interface DocumentCursor<T> {
+            old_val: T;
+            new_val: T;
+            state?: string;
         }
     }
 
