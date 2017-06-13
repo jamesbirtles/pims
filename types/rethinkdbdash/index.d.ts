@@ -96,12 +96,10 @@ declare module "rethinkdbdash" {
         }
 
         export interface ChangeOpts {
-            squash?: boolean | number;
-            changefeed_queue_size?: number;
-            include_initial?: boolean;
-            include_states?: boolean;
-            include_offsets?: boolean;
-            include_types?: boolean;
+            includeInitial?: boolean;
+            includeStates?: boolean;
+            includeOffsets?: boolean;
+            includeTypes?: boolean;
         }
 
         export interface ChangesFeed<T> {
