@@ -112,6 +112,7 @@ declare module "rethinkdbdash" {
             old_val: T;
             new_val: T;
             state?: string;
+            type?: 'add' | 'remove' | 'change' | 'initial' | 'uninitial' | 'state';
         }
     }
 
