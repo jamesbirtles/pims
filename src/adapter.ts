@@ -95,6 +95,10 @@ export class RethinkAdapter {
         return predicates.reduce((q, predicate) => (predicate || (() => q))(q), this.getModelQuery(ctor));
     }
 
+    public changes<T>(ctor: ModelCtor<T>, opts: rethinkdb.ChangeOpts = {}) {
+        return this.getModelQuery(ctor).changes<T>(opts);
+    }
+
     public async save<M>(model: M): Promise<M> {
         const ctor = <ModelCtor<M>> model.constructor;
         const modelInfo = Model.getInfo(ctor);
