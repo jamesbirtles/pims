@@ -19,6 +19,7 @@ export interface GetOptions<T> extends QueryOptions<T> {
 
 export interface JoinOptions {
     predicate?: (row) => void;
+    without?: string[];
 }
 
 export class RethinkAdapter {
@@ -155,6 +156,14 @@ export class RethinkAdapter {
                 break;
             default:
                 throw new Error(`Unhandled relationship type ${relationship.kind}`);
+        }
+
+        if (opts.without) {
+            if (Array.isArray(joinData)) {
+                joinData = joinData.map(joinedModel => Model.without(joinedModel, ...opts.without));
+            } else {
+                joinData = Model.without(joinData, ...opts.without);
+            }
         }
 
         model[relationship.key] = joinData;
