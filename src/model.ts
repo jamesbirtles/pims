@@ -1,12 +1,9 @@
-import { Term } from 'rethinkdbdash';
-
 import { ColumnInfo } from './column';
 import { assignWithArrays, pick as _pick } from './utils';
-import { RethinkAdapter } from './adapter';
 import { Hooks } from './hooks';
 import { RelationshipInfo } from './relationships';
 
-export const modelInfoKey = Symbol('rethink model info');
+export const modelInfoKey = Symbol('model info');
 
 export interface ModelCtor<T> {
     new (): T;
@@ -14,7 +11,7 @@ export interface ModelCtor<T> {
 
 export interface IndexInfo {
     name: string;
-    keys: string[] | ((r: Term<any>) => any);
+    keys: string[];
     options?: {
         multi?: boolean;
         geo?: boolean;

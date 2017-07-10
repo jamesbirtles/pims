@@ -1,0 +1,163 @@
+import {
+    Adapter,
+    adapterKey,
+    QueryOptions,
+    GetOptions,
+    JoinOptions,
+} from './index';
+import { Model, ModelCtor, ModelInfo } from '../model';
+import { Relationship } from '../relationships';
+
+export interface AdapterOptions {
+    models: ModelCtor<any>[];
+}
+
+export abstract class AdapterBase implements Adapter {
+    private models: ModelCtor<any>[];
+
+    constructor(opts: AdapterOptions) {
+        this.models = opts.models;
+
+        opts.models.forEach(model => {
+            model[adapterKey] = this;
+        });
+    }
+
+    /**
+     * Ensures all tables exist, and waits for them to be ready.
+     */
+    public ensure(): Promise<void> {
+        return Promise.all(this.models.map(this.ensureTable, this)).then(
+            () => undefined,
+        );
+    }
+
+    public async save<M>(model: M): Promise<M> {
+        const ctor = <ModelCtor<M>>model.constructor;
+        const modelInfo = Model.getInfo(ctor);
+
+        Model.notify(model, 'beforeSave');
+
+        // todo(birtles): Actually figure out what changed.
+        const changed = modelInfo.columns
+            .filter(col => !col.computed)
+            .reduce(
+                (doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }),
+                {},
+            );
+
+        await this.updateStore(model, changed);
+
+        Model.notify(model, 'afterSave');
+
+        return model;
+    }
+
+    public async delete<M>(model: M): Promise<void> {
+        const ctor = <ModelCtor<M>>model.constructor;
+        const modelInfo = Model.getInfo(ctor);
+
+        Model.notify(model, 'beforeDelete');
+
+        if (!model[modelInfo.primaryKey]) {
+            throw new Error(
+                'Cannot delete model without a populated primary key.',
+            );
+        }
+
+        await this.deleteFromStore(model);
+
+        Model.notify(model, 'afterDelete');
+    }
+
+    public async join<M>(
+        model: M,
+        relationshipKey: string,
+        opts: JoinOptions = {},
+    ): Promise<M> {
+        const ctor = <ModelCtor<M>>model.constructor;
+        const modelInfo = Model.getInfo(ctor);
+
+        const relationship = modelInfo.relationships.find(
+            relationship => relationship.key === relationshipKey,
+        );
+        if (!relationship) {
+            throw new Error(`No relationship found for ${relationshipKey}`);
+        }
+
+        Model.notify(model, 'beforeJoin', relationship);
+
+        let joinData: any;
+        const relationshipModel = relationship.model(model);
+        switch (relationship.kind) {
+            case Relationship.HasMany:
+                joinData = await this.get(
+                    relationshipModel,
+                    model[modelInfo.primaryKey],
+                    { index: relationship.foreignKey },
+                );
+                if (opts.predicate) {
+                    await Promise.all(joinData.map(opts.predicate));
+                }
+                break;
+            case Relationship.BelongsTo:
+                joinData = await this.getOne(
+                    relationshipModel,
+                    model[relationship.foreignKey],
+                );
+                if (opts.predicate) {
+                    await opts.predicate(joinData);
+                }
+                break;
+            case Relationship.HasOne:
+                joinData = await this.getOne(
+                    relationshipModel,
+                    model[modelInfo.primaryKey],
+                    { index: relationship.foreignKey },
+                );
+                if (opts.predicate) {
+                    await opts.predicate(joinData);
+                }
+                break;
+            default:
+                throw new Error(
+                    `Unhandled relationship type ${relationship.kind}`,
+                );
+        }
+
+        model[relationship.key] = joinData;
+
+        Model.notify(model, 'afterJoin', relationship);
+
+        return model;
+    }
+
+    public abstract all<T>(
+        ctor: ModelCtor<T>,
+        opts?: QueryOptions,
+    ): Promise<T[]>;
+    public abstract find<T>(
+        ctor: ModelCtor<T>,
+        filter: Partial<T>,
+        opts?: QueryOptions,
+    ): Promise<T[]>;
+    public abstract findOne<T>(
+        ctor: ModelCtor<T>,
+        filter: Partial<T>,
+        opts?: QueryOptions,
+    ): Promise<T>;
+    public abstract get<T>(
+        ctor: ModelCtor<T>,
+        value: any,
+        opts?: GetOptions,
+    ): Promise<T[]>;
+    public abstract getOne<T>(
+        ctor: ModelCtor<T>,
+        value: any,
+        opts?: GetOptions,
+    ): Promise<T>;
+
+    protected abstract ensureTable(ctor: ModelCtor<any>): Promise<void>;
+    protected abstract updateStore(model: any, payload: any): Promise<void>;
+    protected abstract deleteFromStore(model: any): Promise<void>;
+}

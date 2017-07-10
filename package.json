@@ -7,7 +7,7 @@
     "scripts": {
         "build": "tsc",
         "watch": "tsc -w",
-        "prepublishOnly": "yarn run build"
+        "prepublishOnly": "rm -rf dist && npm run build"
     },
     "repository": {
         "type": "git",
@@ -22,9 +22,12 @@
     "homepage": "https://github.com/UnwrittenFun/rethinkts#readme",
     "devDependencies": {
         "@types/node": "^7.0.8",
+        "arangojs": "^5.7.0",
+        "rethinkdbdash": "^2.3.28",
         "typescript": "^2.2.1"
     },
-    "dependencies": {
+    "peerDependencies": {
+        "arangojs": "^5.7.0",
         "rethinkdbdash": "^2.3.28"
     }
 }
