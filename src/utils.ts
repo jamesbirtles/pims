@@ -1,13 +1,11 @@
 export function assignWithArrays(target: any, ...sources: any[]) {
-    sources
-        .filter(source => source != null)
-        .forEach(source => {
-            Object.keys(source)
-                .filter(key => source[key] !== undefined)
-                .forEach(key => {
-                    target[key] = merge(target[key], source[key]);
-                });
-        });
+    sources.filter(source => source != null).forEach(source => {
+        Object.keys(source)
+            .filter(key => source[key] !== undefined)
+            .forEach(key => {
+                target[key] = merge(target[key], source[key]);
+            });
+    });
 
     return target;
 }
@@ -39,7 +37,7 @@ function mergeMap<A, B>(a: Map<A, B>, b: Map<A, B>): Map<A, B> {
             return [entryB[0], merge(entryA[1], entryB[1])];
         });
 
-    return new Map<A, B>([...aEntries, ...bEntries, ...overrides])
+    return new Map<A, B>([...aEntries, ...bEntries, ...overrides]);
 }
 
 function mergeSet<T>(a: Set<T>, b: Set<T>): Set<T> {
@@ -50,5 +48,8 @@ function mergeSet<T>(a: Set<T>, b: Set<T>): Set<T> {
 }
 
 export function pick<T, K extends keyof T>(obj: T, ...keys: K[]): Pick<T, K> {
-    return <Pick<T, K>> keys.reduce((target, key) => ({ ...target, [key as any]: obj[key] }), {});
+    return <Pick<T, K>>keys.reduce(
+        (target, key) => ({ ...target, [key as any]: obj[key] }),
+        {},
+    );
 }

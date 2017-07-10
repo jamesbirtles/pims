@@ -9,7 +9,7 @@ import { RelationshipInfo } from './relationships';
 export const modelInfoKey = Symbol('rethink model info');
 
 export interface ModelCtor<T> {
-    new(): T;
+    new (): T;
 }
 
 export interface IndexInfo {
@@ -18,7 +18,7 @@ export interface IndexInfo {
     options?: {
         multi?: boolean;
         geo?: boolean;
-    }
+    };
 }
 
 export interface ModelInfo {
@@ -31,32 +31,45 @@ export interface ModelInfo {
     relationships: RelationshipInfo[];
 }
 
-export function createModelInfo(target: ModelCtor<any>, ...objs: Partial<ModelInfo>[]): ModelInfo {
-    return target[modelInfoKey] = assignWithArrays(<Partial<ModelInfo>> {
-        columns: [],
-        indexes: [],
-        relationships: [],
-        primaryKey: 'id',
-        tags: new Map<string, Set<string>>(),
-    }, target[modelInfoKey], ...objs);
+export function createModelInfo(
+    target: ModelCtor<any>,
+    ...objs: Partial<ModelInfo>[]
+): ModelInfo {
+    return (target[modelInfoKey] = assignWithArrays(
+        <Partial<ModelInfo>>{
+            columns: [],
+            indexes: [],
+            relationships: [],
+            primaryKey: 'id',
+            tags: new Map<string, Set<string>>(),
+        },
+        target[modelInfoKey],
+        ...objs,
+    ));
 }
 
 /**
  * Model decorator
  */
 export function Model(info: Partial<ModelInfo>): ClassDecorator {
-    return (target: ModelCtor<any>) => {
+    return (target: any) => {
         const modelInfo = createModelInfo(target, info);
 
-        target.prototype.toJSON = function () {
+        target.prototype.toJSON = function() {
             return [...modelInfo.columns, ...modelInfo.relationships]
                 .filter(column => this[column.key] !== undefined)
-                .reduce((t, column) => ({ ...t, [column.key]: this[column.key] }), {});
+                .reduce(
+                    (t, column) => ({ ...t, [column.key]: this[column.key] }),
+                    {},
+                );
         };
     };
 }
 
-function getKeys(ctor: ModelCtor<any>, tagsOrKeys: string[] | string): string[] {
+function getKeys(
+    ctor: ModelCtor<any>,
+    tagsOrKeys: string[] | string,
+): string[] {
     const modelTags = Model.getInfo(ctor).tags;
 
     let keys: string[];
@@ -81,23 +94,33 @@ export namespace Model {
     }
 
     export function assign<M>(model: M, ...sources: Partial<M>[]): M {
-        return Object.assign(model, ...sources);
+        return Object.assign(<any>model, ...sources);
     }
 
-    export function pickAssign<M>(model: M, tagsOrKeys: string[] | string, ...sources: Partial<M>[]): M {
-        const ctor = <ModelCtor<M>> model.constructor;
+    export function pickAssign<M>(
+        model: M,
+        tagsOrKeys: string[] | string,
+        ...sources: Partial<M>[]
+    ): M {
+        const ctor = <ModelCtor<M>>model.constructor;
         const keys = getKeys(ctor, tagsOrKeys) as Array<keyof M>;
 
-        return Model.assign(model, ...sources.map(source => _pick(source, ...keys)));
+        return Model.assign(
+            model,
+            ...sources.map(source => _pick(source, ...keys)),
+        );
     }
 
     export function pick<M>(model: M, ...tagsOrKeys: string[]): Partial<M> {
-        const ctor = <ModelCtor<M>> model.constructor;
+        const ctor = <ModelCtor<M>>model.constructor;
         const modelTags = Model.getInfo(ctor).tags;
 
         const data = tagsOrKeys.reduce((target, tagOrKey) => {
             if (modelTags.has(tagOrKey)) {
-                return { ...target, ..._pick<M, any>(model, ...modelTags.get(tagOrKey)) };
+                return {
+                    ...target,
+                    ..._pick<M, any>(model, ...modelTags.get(tagOrKey)),
+                };
             }
 
             return { ...target, [tagOrKey]: model[tagOrKey] };
@@ -107,12 +130,11 @@ export namespace Model {
     }
 
     export function without<M>(model: M, ...tagsOrKeys: string[]): Partial<M> {
-        const ctor = <ModelCtor<M>> model.constructor;
+        const ctor = <ModelCtor<M>>model.constructor;
 
         const keys = getKeys(ctor, tagsOrKeys);
 
-        const pickKeys = Object.keys(model)
-            .filter(key => !keys.includes(key));
+        const pickKeys = Object.keys(model).filter(key => !keys.includes(key));
 
         return Model.construct(ctor, _pick<M, any>(model, ...pickKeys));
     }

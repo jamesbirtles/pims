@@ -1,25 +1,19 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "target": "es6",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "sourceMap": true,
-    "noImplicitAny": false,
-    "outDir": "dist",
-    "declaration": true,
-    "lib": [
-      "dom",
-      "es2015",
-      "es2016.array.include"
-    ],
-    "typeRoots": [
-        "node_modules/@types"
-    ],
-    "baseUrl": ".",
-    "paths": {
-        "*": ["*", "./types"]
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es6",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "sourceMap": true,
+        "noImplicitAny": false,
+        "outDir": "dist",
+        "declaration": true,
+        "lib": ["dom", "es2015", "es2016.array.include"],
+        "typeRoots": ["node_modules/@types"],
+        "baseUrl": ".",
+        "paths": {
+            "*": ["*", "./types"]
+        }
     }
-  }
 }

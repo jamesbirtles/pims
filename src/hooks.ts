@@ -1,9 +1,13 @@
 import { RelationshipInfo } from './relationships';
 
-export type Hooks = keyof BeforeSave | keyof AfterSave |
-    keyof BeforeJoin | keyof AfterJoin |
-    keyof BeforeDelete | keyof AfterDelete |
-    keyof AfterRetrieve;
+export type Hooks =
+    | keyof BeforeSave
+    | keyof AfterSave
+    | keyof BeforeJoin
+    | keyof AfterJoin
+    | keyof BeforeDelete
+    | keyof AfterDelete
+    | keyof AfterRetrieve;
 
 /**
  * Save hooks are called before and after saving to the db.

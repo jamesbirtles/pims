@@ -29,11 +29,20 @@ export function Column(info?: Partial<ColumnInfo>): any {
             ...info,
         };
 
-        const modelInfo: ModelInfo = createModelInfo(<any> target.constructor, {
+        const modelInfo: ModelInfo = createModelInfo(<any>target.constructor, {
             columns: [columnInfo],
-            tags: new Map(columnInfo.tags.map<[string, Set<string>]>(tag => [tag, new Set([columnInfo.key])])),
+            tags: new Map(
+                columnInfo.tags.map<[string, Set<string>]>(tag => [
+                    tag,
+                    new Set([columnInfo.key]),
+                ]),
+            ),
         });
-        columnInfo.secondary && modelInfo.indexes.push({ name: columnInfo.key, keys: [columnInfo.key] });
+        columnInfo.secondary &&
+            modelInfo.indexes.push({
+                name: columnInfo.key,
+                keys: [columnInfo.key],
+            });
         columnInfo.primary && (modelInfo.primaryKey = columnInfo.key);
-    }
+    };
 }

@@ -55,44 +55,75 @@ export class RethinkAdapter {
         return this.find(ctor, null, opts);
     }
 
-    public async find<T>(ctor: ModelCtor<T>, filter: Partial<T>, opts: QueryOptions<T[]> = {}): Promise<T[]> {
+    public async find<T>(
+        ctor: ModelCtor<T>,
+        filter: Partial<T>,
+        opts: QueryOptions<T[]> = {},
+    ): Promise<T[]> {
         const rows = await this.query(
             ctor,
             filter != null && (q => q.filter(filter)),
             opts.predicate,
         );
         return rows.map(row => {
-            const model = Model.construct(ctor, row)
+            const model = Model.construct(ctor, row);
             Model.notify(model, 'afterRetrieve');
             return model;
         });
     }
 
-    public async findOne<T>(ctor: ModelCtor<T>, filter: Partial<T>, opts: QueryOptions<T[]> = {}): Promise<T> {
-        const rows = await this.find(ctor, filter, {...opts, predicate: q => (opts.predicate || (() => q))(q).limit(1)});
+    public async findOne<T>(
+        ctor: ModelCtor<T>,
+        filter: Partial<T>,
+        opts: QueryOptions<T[]> = {},
+    ): Promise<T> {
+        const rows = await this.find(ctor, filter, {
+            ...opts,
+            predicate: q => (opts.predicate || (() => q))(q).limit(1),
+        });
         return rows[0];
     }
 
-    public async get<T>(ctor: ModelCtor<T>, value: any, opts: GetOptions<T[]> = {}): Promise<T[]> {
+    public async get<T>(
+        ctor: ModelCtor<T>,
+        value: any,
+        opts: GetOptions<T[]> = {},
+    ): Promise<T[]> {
         const rows = await this.query(
             ctor,
-            q => q.getAll(value, { index: opts.index || Model.getInfo(ctor).primaryKey }),
-            opts.predicate
+            q =>
+                q.getAll(value, {
+                    index: opts.index || Model.getInfo(ctor).primaryKey,
+                }),
+            opts.predicate,
         );
         return rows.map(row => {
-            const model = Model.construct(ctor, row)
+            const model = Model.construct(ctor, row);
             Model.notify(model, 'afterRetrieve');
             return model;
         });
     }
 
-    public async getOne<T>(ctor: ModelCtor<T>, value: any, opts: GetOptions<T[]> = {}): Promise<T> {
-        const rows = await this.get(ctor, value, {...opts, predicate: q => (opts.predicate || (() => q))(q).limit(1)});
+    public async getOne<T>(
+        ctor: ModelCtor<T>,
+        value: any,
+        opts: GetOptions<T[]> = {},
+    ): Promise<T> {
+        const rows = await this.get(ctor, value, {
+            ...opts,
+            predicate: q => (opts.predicate || (() => q))(q).limit(1),
+        });
         return rows[0];
     }
 
-    public query<T>(ctor: ModelCtor<T>, ...predicates: QueryPredicate<T[]>[]): rethinkdb.Term<T[]> {
-        return predicates.reduce((q, predicate) => (predicate || (() => q))(q), this.getModelQuery(ctor));
+    public query<T>(
+        ctor: ModelCtor<T>,
+        ...predicates: QueryPredicate<T[]>[]
+    ): rethinkdb.Term<T[]> {
+        return predicates.reduce(
+            (q, predicate) => (predicate || (() => q))(q),
+            this.getModelQuery(ctor),
+        );
     }
 
     public changes<T>(ctor: ModelCtor<T>, opts: rethinkdb.ChangeOpts = {}) {
@@ -100,7 +131,7 @@ export class RethinkAdapter {
     }
 
     public async save<M>(model: M): Promise<M> {
-        const ctor = <ModelCtor<M>> model.constructor;
+        const ctor = <ModelCtor<M>>model.constructor;
         const modelInfo = Model.getInfo(ctor);
 
         Model.notify(model, 'beforeSave');
@@ -108,9 +139,14 @@ export class RethinkAdapter {
         // todo(birtles): Actually figure out what changed.
         const changed = modelInfo.columns
             .filter(col => !col.computed)
-            .reduce((doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }), {});
+            .reduce(
+                (doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }),
+                {},
+            );
 
-        const doc = await this.getModelQuery(ctor).insert(changed, { conflict: 'update' })
+        const doc = await this.getModelQuery(ctor).insert(changed, {
+            conflict: 'update',
+        });
 
         if (model[modelInfo.primaryKey] == null && doc.generated_keys) {
             model[modelInfo.primaryKey] = doc.generated_keys[0];
@@ -121,11 +157,17 @@ export class RethinkAdapter {
         return model;
     }
 
-    public async join<M>(model: M, relationshipKey: string, opts: JoinOptions = {}): Promise<M> {
-        const ctor = <ModelCtor<M>> model.constructor;
+    public async join<M>(
+        model: M,
+        relationshipKey: string,
+        opts: JoinOptions = {},
+    ): Promise<M> {
+        const ctor = <ModelCtor<M>>model.constructor;
         const modelInfo = Model.getInfo(ctor);
 
-        const relationship = modelInfo.relationships.find(relationship => relationship.key === relationshipKey);
+        const relationship = modelInfo.relationships.find(
+            relationship => relationship.key === relationshipKey,
+        );
         if (!relationship) {
             throw new Error(`No relationship found for ${relationshipKey}`);
         }
@@ -136,25 +178,38 @@ export class RethinkAdapter {
         const relationshipModel = relationship.model(model);
         switch (relationship.kind) {
             case Relationship.HasMany:
-                joinData = await this.get(relationshipModel, model[modelInfo.primaryKey], { index: relationship.foreignKey });
+                joinData = await this.get(
+                    relationshipModel,
+                    model[modelInfo.primaryKey],
+                    { index: relationship.foreignKey },
+                );
                 if (opts.predicate) {
                     await Promise.all(joinData.map(opts.predicate));
                 }
                 break;
             case Relationship.BelongsTo:
-                joinData = await this.getOne(relationshipModel, model[relationship.foreignKey]);
+                joinData = await this.getOne(
+                    relationshipModel,
+                    model[relationship.foreignKey],
+                );
                 if (opts.predicate) {
                     await opts.predicate(joinData);
                 }
                 break;
             case Relationship.HasOne:
-                joinData = await this.getOne(relationshipModel, model[modelInfo.primaryKey], { index: relationship.foreignKey });
+                joinData = await this.getOne(
+                    relationshipModel,
+                    model[modelInfo.primaryKey],
+                    { index: relationship.foreignKey },
+                );
                 if (opts.predicate) {
                     await opts.predicate(joinData);
                 }
                 break;
             default:
-                throw new Error(`Unhandled relationship type ${relationship.kind}`);
+                throw new Error(
+                    `Unhandled relationship type ${relationship.kind}`,
+                );
         }
 
         model[relationship.key] = joinData;
@@ -165,16 +220,20 @@ export class RethinkAdapter {
     }
 
     public async delete<M>(model: M): Promise<void> {
-        const ctor = <ModelCtor<M>> model.constructor;
+        const ctor = <ModelCtor<M>>model.constructor;
         const modelInfo = Model.getInfo(ctor);
 
         Model.notify(model, 'beforeDelete');
 
         if (!model[modelInfo.primaryKey]) {
-            throw new Error('Cannot delete model without a populated primary key.');
+            throw new Error(
+                'Cannot delete model without a populated primary key.',
+            );
         }
 
-        await this.getModelQuery(ctor).get(model[modelInfo.primaryKey]).delete();
+        await this.getModelQuery(ctor)
+            .get(model[modelInfo.primaryKey])
+            .delete();
 
         Model.notify(model, 'afterDelete');
     }
@@ -191,7 +250,10 @@ export class RethinkAdapter {
     private async ensureTable(ctor: ModelCtor<any>) {
         const modelInfo = Model.getInfo(ctor);
 
-        const tableExists = await this.r.db(modelInfo.database).tableList().contains(modelInfo.table);
+        const tableExists = await this.r
+            .db(modelInfo.database)
+            .tableList()
+            .contains(modelInfo.table);
 
         if (!tableExists) {
             await this.r.db(modelInfo.database).tableCreate(modelInfo.table);
@@ -202,7 +264,7 @@ export class RethinkAdapter {
             modelInfo.indexes
                 .filter(index => !existingIndexes.includes(index.name))
                 .map(index => {
-                    let key: any
+                    let key: any;
                     if (Array.isArray(index.keys)) {
                         key = index.keys.map(key => this.getRowFromPath(key));
 
@@ -210,11 +272,15 @@ export class RethinkAdapter {
                             key = key[0];
                         }
                     } else if (typeof index.keys === 'function') {
-                        key = () => (<any> index.keys)(this.r);
+                        key = () => (<any>index.keys)(this.r);
                     } else {
                         key = index.keys;
                     }
-                    return this.getModelQuery(ctor).indexCreate(index.name, key, index.options);
+                    return this.getModelQuery(ctor).indexCreate(
+                        index.name,
+                        key,
+                        index.options,
+                    );
                 }),
         );
 
