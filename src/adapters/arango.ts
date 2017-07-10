@@ -56,10 +56,6 @@ export class ArangoAdapter extends AdapterBase {
     constructor(opts: ArangoAdapterOptions) {
         super(opts);
 
-        console.log(
-            `http://${opts.username}:${opts.password}@${opts.host}:${opts.port}`,
-        );
-
         this.db = new Database({
             url: `http://${opts.username}:${opts.password}@${opts.host}:${opts.port}`,
             databaseName: opts.database,
@@ -235,10 +231,7 @@ export class ArangoAdapter extends AdapterBase {
             );
             const values = Array.isArray(value) ? value : [value];
             indexInfo.keys.forEach((key, i) => set(filter, key, values[i]));
-            console.log(indexInfo);
         }
-
-        console.log(filter);
 
         return filter;
     }
