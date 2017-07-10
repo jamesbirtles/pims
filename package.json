@@ -1,7 +1,7 @@
 {
-    "name": "rethinkts",
-    "version": "1.0.0-alpha",
-    "description": "A model system for RethinkDB, written in and for TypeScript.",
+    "name": "pims",
+    "version": "0.0.0",
+    "description": "An ORM for document-oriented database systems, written in and for TypeScript.",
     "main": "dist/index.js",
     "typings": "dist/index",
     "scripts": {
@@ -11,15 +11,23 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/UnwrittenFun/rethinkts.git"
+        "url": "git+https://github.com/UnwrittenFun/pims.git"
     },
-    "keywords": ["rethinkdb", "rethink", "thinky", "database", "model"],
-    "author": "James Birtles <unwrittenfun@gmail.com>",
+    "keywords": [
+        "rethinkdb",
+        "rethink",
+        "thinky",
+        "database",
+        "model",
+        "arangodb",
+        "arango"
+    ],
+    "author": "James Birtles <jameshbirtles@gmail.com>",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/UnwrittenFun/rethinkts/issues"
+        "url": "https://github.com/UnwrittenFun/pims/issues"
     },
-    "homepage": "https://github.com/UnwrittenFun/rethinkts#readme",
+    "homepage": "https://github.com/UnwrittenFun/pims#readme",
     "devDependencies": {
         "@types/node": "^7.0.8",
         "arangojs": "^5.7.0",
