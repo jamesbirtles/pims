@@ -7,9 +7,17 @@ import {
 } from './index';
 import { Model, ModelCtor, ModelInfo } from '../model';
 import { Relationship } from '../relationships';
+import { Column } from '../column';
 
 export interface AdapterOptions {
     models: ModelCtor<any>[];
+}
+
+function getHasAndBelongsName(leftName: string, rightName: string) {    
+    if (leftName < rightName) {
+        return `${leftName}_${rightName}`;
+    }
+    return `${rightName}_${leftName}`;
 }
 
 export abstract class AdapterBase implements Adapter {
@@ -17,9 +25,51 @@ export abstract class AdapterBase implements Adapter {
 
     constructor(opts: AdapterOptions) {
         this.models = opts.models;
+        const tableNames = new Map<string, { leftModel: ModelInfo; rightModel: ModelInfo; }>();
 
         opts.models.forEach(model => {
             model[adapterKey] = this;
+            const modelInfo = Model.getInfo(model);
+            const relations = modelInfo.relationships.filter(relation => relation.kind === Relationship.HasAndBelongsToMany);
+            relations.forEach(relation => {
+                const relatedModel = Model.getInfo(relation.model(model));
+                let tableName = getHasAndBelongsName(modelInfo.table, relatedModel.table);
+                tableNames.set(tableName, { leftModel: modelInfo, rightModel: relatedModel });
+            });
+        });
+
+        Array.from(tableNames.entries()).forEach(([ tableName, { leftModel, rightModel } ]) => {
+            @Model({
+                database: leftModel.database,
+                table: tableName,
+                columns: [
+                    // {
+                    //     modelKey: 'id',
+                    //     key: 'id',
+                    //     tags: [],
+                    //     primary: true,
+                    // },
+                    // {
+                    //     modelKey: leftModel.table,
+                    //     key: leftModel.table,
+                    //     tags: [],
+                    //     secondary: true,
+                    // },
+                    // {
+                    //     modelKey: rightModel.table,
+                    //     key: rightModel.table,
+                    //     tags: [],
+                    //     secondary: true,
+                    // },
+                ]
+            })
+            class LinkedModel {}
+
+            Column({ primary: true })(LinkedModel.prototype, 'id')
+            Column({ secondary: true })(LinkedModel.prototype, `${leftModel.table}_id`)
+            Column({ secondary: true })(LinkedModel.prototype, `${rightModel.table}_id`)
+
+            this.models.push(LinkedModel);
         });
     }
 
@@ -89,6 +139,7 @@ export abstract class AdapterBase implements Adapter {
 
         let joinData: any;
         const relationshipModel = relationship.model(model);
+        const relationshipModelInfo = Model.getInfo(relationshipModel);
         switch (relationship.kind) {
             case Relationship.HasMany:
                 joinData = await this.get(
@@ -119,6 +170,18 @@ export abstract class AdapterBase implements Adapter {
                     await opts.predicate(joinData);
                 }
                 break;
+            case Relationship.HasAndBelongsToMany:
+                const linkedModels = await this.get(
+                    this.getModelByName(
+                        getHasAndBelongsName(modelInfo.table, relationshipModelInfo.table)
+                    ),
+                    model[modelInfo.primaryKey],
+                    { index: `${modelInfo.table}_id` },
+                );
+                joinData = await Promise.all(
+                    linkedModels.map(model => this.getOne(relationshipModel, model[`${relationshipModelInfo.table}_id`]))
+                );
+                break;
             default:
                 throw new Error(
                     `Unhandled relationship type ${relationship.kind}`,
@@ -130,6 +193,10 @@ export abstract class AdapterBase implements Adapter {
         Model.notify(model, 'afterJoin', relationship);
 
         return model;
+    }
+
+    private getModelByName<T>(name: string): ModelCtor<T> {
+        return this.models.find(model => Model.getInfo(model).table === name);
     }
 
     public abstract all<T>(
