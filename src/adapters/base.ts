@@ -42,26 +42,6 @@ export abstract class AdapterBase implements Adapter {
             @Model({
                 database: leftModel.database,
                 table: tableName,
-                columns: [
-                    // {
-                    //     modelKey: 'id',
-                    //     key: 'id',
-                    //     tags: [],
-                    //     primary: true,
-                    // },
-                    // {
-                    //     modelKey: leftModel.table,
-                    //     key: leftModel.table,
-                    //     tags: [],
-                    //     secondary: true,
-                    // },
-                    // {
-                    //     modelKey: rightModel.table,
-                    //     key: rightModel.table,
-                    //     tags: [],
-                    //     secondary: true,
-                    // },
-                ]
             })
             class LinkedModel {}
 
