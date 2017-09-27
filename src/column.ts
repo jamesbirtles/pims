@@ -15,7 +15,7 @@ export function Column(info?: Partial<ColumnInfo>): any {
 
         if (descriptor) {
             if (!descriptor.get) {
-                throw new Error('Cannot apply colum decorator to methods');
+                throw new Error('Cannot apply column decorator to methods');
             }
 
             computed = true;
