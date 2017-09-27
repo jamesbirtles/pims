@@ -4,6 +4,7 @@ export enum Relationship {
     HasMany,
     BelongsTo,
     HasOne,
+    HasAndBelongsToMany
 }
 
 export interface RelationshipInfo {
@@ -32,6 +33,12 @@ export function BelongsTo(
     localKey: string,
 ): PropertyDecorator {
     return RelationshipDecorator(Relationship.BelongsTo, model, localKey);
+}
+
+export function HasAndBelongsToMany(
+    model: (model: any) => any,
+): PropertyDecorator {
+    return RelationshipDecorator(Relationship.HasAndBelongsToMany, model, null);
 }
 
 function RelationshipDecorator(

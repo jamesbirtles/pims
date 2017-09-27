@@ -37,6 +37,6 @@ export interface Adapter {
 
 export namespace Adapter {
     export function fromModel<T extends Adapter>(model: any): T {
-        return model[adapterKey] || model.contructor[adapterKey];
+        return model[adapterKey] || model.constructor[adapterKey];
     }
 }
