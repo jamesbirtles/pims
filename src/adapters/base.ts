@@ -13,7 +13,7 @@ export interface AdapterOptions {
     models: ModelCtor<any>[];
 }
 
-function getHasAndBelongsName(leftName: string, rightName: string) {
+function getHasAndBelongsName(leftName: string, rightName: string) {    
     if (leftName < rightName) {
         return `${leftName}_${rightName}`;
     }
@@ -72,9 +72,9 @@ export abstract class AdapterBase implements Adapter {
         const changed = modelInfo.columns
             .filter(col => !col.computed)
             .reduce(
-            (doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }),
-            {},
-        );
+                (doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }),
+                {},
+            );
 
         await this.updateStore(model, changed);
 

@@ -6,7 +6,7 @@ import { AdapterBase, AdapterOptions } from './base';
 
 export interface RethinkAdapterOptions
     extends rethinkdb.ImportOptions,
-    AdapterOptions {}
+        AdapterOptions {}
 
 export type RethinkQueryPredicate<T> = (
     q: rethinkdb.Term<T>,
