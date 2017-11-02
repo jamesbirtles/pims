@@ -6,7 +6,7 @@ import { AdapterBase, AdapterOptions } from './base';
 
 export interface RethinkAdapterOptions
     extends rethinkdb.ImportOptions,
-        AdapterOptions {}
+    AdapterOptions {}
 
 export type RethinkQueryPredicate<T> = (
     q: rethinkdb.Term<T>,
@@ -100,10 +100,20 @@ export class RethinkAdapter extends AdapterBase {
         return rows[0];
     }
 
+    public async count<T>(
+        ctor: ModelCtor<T>,
+        predicate?: RethinkQueryPredicate<T>,
+    ): Promise<number> {
+        return await this.query(
+            ctor,
+            q => q.count(predicate),
+        );
+    }
+
     public query<T>(
         ctor: ModelCtor<T>,
         ...predicates: RethinkQueryPredicate<T[]>[]
-    ): rethinkdb.Term<T[]> {
+    ): rethinkdb.Term<any> {
         return predicates.reduce(
             (q, predicate) => (predicate || (() => q))(q),
             this.getModelQuery(ctor),

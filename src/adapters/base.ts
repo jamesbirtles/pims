@@ -13,7 +13,7 @@ export interface AdapterOptions {
     models: ModelCtor<any>[];
 }
 
-function getHasAndBelongsName(leftName: string, rightName: string) {    
+function getHasAndBelongsName(leftName: string, rightName: string) {
     if (leftName < rightName) {
         return `${leftName}_${rightName}`;
     }
@@ -72,9 +72,9 @@ export abstract class AdapterBase implements Adapter {
         const changed = modelInfo.columns
             .filter(col => !col.computed)
             .reduce(
-                (doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }),
-                {},
-            );
+            (doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }),
+            {},
+        );
 
         await this.updateStore(model, changed);
 
@@ -203,6 +203,10 @@ export abstract class AdapterBase implements Adapter {
         value: any,
         opts?: GetOptions,
     ): Promise<T>;
+    public abstract count<T>(
+        ctor: ModelCtor<T>,
+        predicate: (model: T) => boolean
+    ): Promise<number>;
 
     protected abstract ensureTable(ctor: ModelCtor<any>): Promise<void>;
     protected abstract updateStore(model: any, payload: any): Promise<void>;

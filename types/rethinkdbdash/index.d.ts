@@ -40,6 +40,7 @@ declare module "rethinkdbdash" {
 
             getAll<T>(value: string, opts?: { index?: string }): Term<T[]>;
             get<T>(id: string): Term<T>;
+            count(query: any): Term<number>
             limit(limit: number): this;
             indexList(): Term<string[]>;
             indexCreate(name: string, key: Row[], opts?: any): Term<{ created: number }>;
