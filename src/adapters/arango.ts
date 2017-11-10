@@ -1,7 +1,7 @@
 import { Database } from 'arangojs';
 
 import { Model, ModelCtor } from '../model';
-import { QueryOptions, GetOptions } from './';
+import { QueryOptions, QueryPredicate, GetOptions } from './';
 import { AdapterBase, AdapterOptions } from './base';
 import { set } from '../utils';
 
@@ -131,6 +131,13 @@ export class ArangoAdapter extends AdapterBase {
         );
 
         return this.findOne(ctor, filter, opts);
+    }
+
+    public async count<T>(
+        ctor: ModelCtor<T>,
+        predicate?: QueryPredicate,
+    ): Promise<number> {
+        throw new Error('Not yet implemented.');
     }
 
     protected async ensureTable(ctor: ModelCtor<any>): Promise<void> {

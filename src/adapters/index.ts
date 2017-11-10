@@ -32,8 +32,8 @@ export interface Adapter {
     ): Promise<T>;
     get<T>(ctor: ModelCtor<T>, value: any, opts?: GetOptions): Promise<T[]>;
     getOne<T>(ctor: ModelCtor<T>, value: any, opts?: GetOptions): Promise<T>;
+    count<T>(ctor: ModelCtor<T>, predicate: QueryPredicate): Promise<number>;
     join<M>(model: M, relationshipKey: string, opts?: JoinOptions): Promise<M>;
-    count<M>(model: M, predicate: QueryPredicate): Promise<number>;
 }
 
 export namespace Adapter {

@@ -1,12 +1,13 @@
 import * as rethinkdb from 'rethinkdbdash';
 
+import { QueryPredicate } from './';
 import { Model, ModelCtor, ModelInfo, modelInfoKey } from '../model';
 import { Relationship } from '../relationships';
 import { AdapterBase, AdapterOptions } from './base';
 
 export interface RethinkAdapterOptions
     extends rethinkdb.ImportOptions,
-        AdapterOptions {}
+    AdapterOptions {}
 
 export type RethinkQueryPredicate<T> = (
     q: rethinkdb.Term<T>,
@@ -102,7 +103,7 @@ export class RethinkAdapter extends AdapterBase {
 
     public async count<T>(
         ctor: ModelCtor<T>,
-        predicate?: RethinkQueryPredicate<T>,
+        predicate?: QueryPredicate,
     ): Promise<number> {
         return await this.query(
             ctor,
