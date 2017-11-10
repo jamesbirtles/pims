@@ -33,7 +33,7 @@ export interface Adapter {
     get<T>(ctor: ModelCtor<T>, value: any, opts?: GetOptions): Promise<T[]>;
     getOne<T>(ctor: ModelCtor<T>, value: any, opts?: GetOptions): Promise<T>;
     join<M>(model: M, relationshipKey: string, opts?: JoinOptions): Promise<M>;
-    count<M>(model: M, predicate: (model: M) => boolean): Promise<number>;
+    count<M>(model: M, predicate: QueryPredicate): Promise<number>;
 }
 
 export namespace Adapter {
