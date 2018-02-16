@@ -1,6 +1,6 @@
 {
     "name": "pims-arangodb",
-    "version": "1.0.0-beta.3",
+    "version": "1.0.0",
     "description": "ArangoDB adapter for PIMS",
     "main": "dist/index.js",
     "typings": "dist/index",
