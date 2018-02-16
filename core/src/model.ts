@@ -102,7 +102,7 @@ export namespace Model {
         const ctor = <ModelCtor<M>>model.constructor;
         const keys = getKeys(ctor, tagsOrKeys) as Array<keyof M>;
 
-        return Model.assign(
+        return Model.assign<M>(
             model,
             ...sources.map(source => _pick(source, ...keys)),
         );
@@ -133,7 +133,7 @@ export namespace Model {
 
         const pickKeys = Object.keys(model).filter(key => !keys.includes(key));
 
-        return Model.construct(ctor, _pick<M, any>(model, ...pickKeys));
+        return Model.construct<M>(ctor, <any>_pick<M, any>(model, ...pickKeys));
     }
 
     export function getInfo(ctor: ModelCtor<any>): ModelInfo {
