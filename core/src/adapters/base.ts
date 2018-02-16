@@ -13,7 +13,7 @@ export interface AdapterOptions {
     models: ModelCtor<any>[];
 }
 
-function getHasAndBelongsName(leftName: string, rightName: string) {    
+function getHasAndBelongsName(leftName: string, rightName: string) {
     if (leftName < rightName) {
         return `${leftName}_${rightName}`;
     }
@@ -25,32 +25,51 @@ export abstract class AdapterBase implements Adapter {
 
     constructor(opts: AdapterOptions) {
         this.models = opts.models;
-        const tableNames = new Map<string, { leftModel: ModelInfo; rightModel: ModelInfo; }>();
+        const tableNames = new Map<
+            string,
+            { leftModel: ModelInfo; rightModel: ModelInfo }
+        >();
 
         opts.models.forEach(model => {
             model[adapterKey] = this;
             const modelInfo = Model.getInfo(model);
-            const relations = modelInfo.relationships.filter(relation => relation.kind === Relationship.HasAndBelongsToMany);
+            const relations = modelInfo.relationships.filter(
+                relation => relation.kind === Relationship.HasAndBelongsToMany,
+            );
             relations.forEach(relation => {
                 const relatedModel = Model.getInfo(relation.model(model));
-                let tableName = getHasAndBelongsName(modelInfo.table, relatedModel.table);
-                tableNames.set(tableName, { leftModel: modelInfo, rightModel: relatedModel });
+                let tableName = getHasAndBelongsName(
+                    modelInfo.table,
+                    relatedModel.table,
+                );
+                tableNames.set(tableName, {
+                    leftModel: modelInfo,
+                    rightModel: relatedModel,
+                });
             });
         });
 
-        Array.from(tableNames.entries()).forEach(([ tableName, { leftModel, rightModel } ]) => {
-            @Model({
-                database: leftModel.database,
-                table: tableName,
-            })
-            class LinkedModel {}
+        Array.from(tableNames.entries()).forEach(
+            ([tableName, { leftModel, rightModel }]) => {
+                @Model({
+                    database: leftModel.database,
+                    table: tableName,
+                })
+                class LinkedModel {}
 
-            Column({ primary: true })(LinkedModel.prototype, 'id')
-            Column({ secondary: true })(LinkedModel.prototype, `${leftModel.table}_id`)
-            Column({ secondary: true })(LinkedModel.prototype, `${rightModel.table}_id`)
+                Column({ primary: true })(LinkedModel.prototype, 'id');
+                Column({ secondary: true })(
+                    LinkedModel.prototype,
+                    `${leftModel.table}_id`,
+                );
+                Column({ secondary: true })(
+                    LinkedModel.prototype,
+                    `${rightModel.table}_id`,
+                );
 
-            this.models.push(LinkedModel);
-        });
+                this.models.push(LinkedModel);
+            },
+        );
     }
 
     /**
@@ -134,7 +153,7 @@ export abstract class AdapterBase implements Adapter {
             case Relationship.BelongsTo:
                 joinData = await this.getOne(
                     relationshipModel,
-                    model[relationship.foreignKey],
+                    model[relationship.foreignKey!],
                 );
                 if (opts.predicate) {
                     await opts.predicate(joinData);
@@ -153,13 +172,21 @@ export abstract class AdapterBase implements Adapter {
             case Relationship.HasAndBelongsToMany:
                 const linkedModels = await this.get(
                     this.getModelByName(
-                        getHasAndBelongsName(modelInfo.table, relationshipModelInfo.table)
+                        getHasAndBelongsName(
+                            modelInfo.table,
+                            relationshipModelInfo.table,
+                        ),
                     ),
                     model[modelInfo.primaryKey],
                     { index: `${modelInfo.table}_id` },
                 );
                 joinData = await Promise.all(
-                    linkedModels.map(model => this.getOne(relationshipModel, model[`${relationshipModelInfo.table}_id`]))
+                    linkedModels.map(model =>
+                        this.getOne(
+                            relationshipModel,
+                            model[`${relationshipModelInfo.table}_id`],
+                        ),
+                    ),
                 );
                 break;
             default:
@@ -176,7 +203,7 @@ export abstract class AdapterBase implements Adapter {
     }
 
     private getModelByName<T>(name: string): ModelCtor<T> {
-        return this.models.find(model => Model.getInfo(model).table === name);
+        return this.models.find(model => Model.getInfo(model).table === name)!;
     }
 
     public abstract all<T>(

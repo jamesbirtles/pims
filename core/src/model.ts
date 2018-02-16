@@ -76,9 +76,9 @@ function getKeys(
         keys = [tagsOrKeys];
     }
 
-    return keys.reduce((keys, tagOrKey) => {
+    return keys.reduce<string[]>((keys, tagOrKey) => {
         if (modelTags.has(tagOrKey)) {
-            return [...keys, ...modelTags.get(tagOrKey)];
+            return [...keys, ...modelTags.get(tagOrKey)!];
         }
 
         return [...keys, tagOrKey];
@@ -116,7 +116,7 @@ export namespace Model {
             if (modelTags.has(tagOrKey)) {
                 return {
                     ...target,
-                    ..._pick<M, any>(model, ...modelTags.get(tagOrKey)),
+                    ..._pick<M, any>(model, ...modelTags.get(tagOrKey)!),
                 };
             }
 

@@ -237,7 +237,7 @@ export class ArangoAdapter extends AdapterBase {
                 info => info.name === index,
             );
             const values = Array.isArray(value) ? value : [value];
-            indexInfo.keys.forEach((key, i) => set(filter, key, values[i]));
+            indexInfo!.keys.forEach((key, i) => set(filter, key, values[i]));
         }
 
         return filter;

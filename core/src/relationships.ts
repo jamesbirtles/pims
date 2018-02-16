@@ -4,13 +4,13 @@ export enum Relationship {
     HasMany,
     BelongsTo,
     HasOne,
-    HasAndBelongsToMany
+    HasAndBelongsToMany,
 }
 
 export interface RelationshipInfo {
     kind: Relationship;
     key: string;
-    foreignKey: string;
+    foreignKey?: string;
     model: (model: any) => any;
 }
 
@@ -38,13 +38,13 @@ export function BelongsTo(
 export function HasAndBelongsToMany(
     model: (model: any) => any,
 ): PropertyDecorator {
-    return RelationshipDecorator(Relationship.HasAndBelongsToMany, model, null);
+    return RelationshipDecorator(Relationship.HasAndBelongsToMany, model);
 }
 
 function RelationshipDecorator(
     kind: Relationship,
     model: (model: any) => any,
-    foreignKey: string,
+    foreignKey?: string,
 ): PropertyDecorator {
     return (target, key) => {
         const relationship: RelationshipInfo = {

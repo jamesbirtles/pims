@@ -33,7 +33,7 @@ function mergeMap<A, B>(a: Map<A, B>, b: Map<A, B>): Map<A, B> {
     const overrides: any[] = bEntries
         .filter(entryB => aEntries.some(entryA => entryA[0] === entryB[0]))
         .map(entryB => {
-            const entryA = aEntries.find(entryA => entryA[0] === entryB[0]);
+            const entryA = aEntries.find(entryA => entryA[0] === entryB[0])!;
             return [entryB[0], merge(entryA[1], entryB[1])];
         });
 

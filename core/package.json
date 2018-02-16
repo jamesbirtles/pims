@@ -30,6 +30,6 @@
     "homepage": "https://github.com/UnwrittenFun/pims#readme",
     "devDependencies": {
         "@types/node": "^7.0.8",
-        "typescript": "^2.2.1"
+        "typescript": "^2.7.2"
     }
 }

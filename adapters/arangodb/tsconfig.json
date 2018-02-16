@@ -9,6 +9,8 @@
         "noImplicitAny": false,
         "outDir": "dist",
         "declaration": true,
-        "lib": ["dom", "es2015", "es2016.array.include"]
+        "lib": ["dom", "es2015", "es2016.array.include"],
+        "strict": true,
+        "strictPropertyInitialization": false
     }
 }
