@@ -32,7 +32,7 @@ export function createModelInfo(
     target: ModelCtor<any>,
     ...objs: Partial<ModelInfo>[]
 ): ModelInfo {
-    return (target[modelInfoKey] = assignWithArrays(
+    return ((target as any)[modelInfoKey] = assignWithArrays(
         <Partial<ModelInfo>>{
             columns: [],
             indexes: [],
@@ -40,7 +40,7 @@ export function createModelInfo(
             primaryKey: 'id',
             tags: new Map<string, Set<string>>(),
         },
-        target[modelInfoKey],
+        (target as any)[modelInfoKey],
         ...objs,
     ));
 }
@@ -120,7 +120,7 @@ export namespace Model {
                 };
             }
 
-            return { ...target, [tagOrKey]: model[tagOrKey] };
+            return { ...target, [tagOrKey]: (model as any)[tagOrKey] };
         }, {});
 
         return Model.construct(ctor, data);
@@ -137,7 +137,7 @@ export namespace Model {
     }
 
     export function getInfo(ctor: ModelCtor<any>): ModelInfo {
-        return ctor[modelInfoKey];
+        return (ctor as any)[modelInfoKey];
     }
 
     export function notify(model: any, hook: Hooks, ...args: any[]): any {

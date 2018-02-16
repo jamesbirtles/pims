@@ -1,4 +1,8 @@
-export function set(dest: object, keyPath: string, value: any) {
+export function set(
+    dest: { [index: string]: any },
+    keyPath: string,
+    value: any,
+) {
     const path = keyPath.split('.');
     path.forEach((key, index) => {
         // Is this the last path

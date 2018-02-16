@@ -12,7 +12,7 @@ export interface GetOptions extends QueryOptions {
 }
 
 export interface JoinOptions {
-    predicate?: (row) => void;
+    predicate?: (row: any) => void;
 }
 
 export interface Adapter {

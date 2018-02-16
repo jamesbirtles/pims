@@ -79,7 +79,7 @@ export class ArangoAdapter extends AdapterBase {
 
         const modelInfo = Model.getInfo(ctor);
         const cursor = await this.db.collection(modelInfo.table).all();
-        const rows = await cursor.all();
+        const rows: any[] = await cursor.all();
         return rows.map(row => this.mapToModel(ctor, row));
     }
 
@@ -94,7 +94,7 @@ export class ArangoAdapter extends AdapterBase {
         const cursor = await this.db
             .collection(modelInfo.table)
             .byExample(this.asExample(ctor, filter));
-        const rows = await cursor.all();
+        const rows: any[] = await cursor.all();
         return rows.map(row => this.mapToModel(ctor, row));
     }
 
@@ -216,7 +216,7 @@ export class ArangoAdapter extends AdapterBase {
         return Object.keys(filter).reduce(
             (dest, key) => ({
                 ...dest,
-                [this.thisOrKey(ctor, key)]: filter[key],
+                [this.thisOrKey(ctor, key)]: (filter as any)[key],
             }),
             {},
         );
@@ -231,7 +231,7 @@ export class ArangoAdapter extends AdapterBase {
         const filter: object = {};
 
         if (index === '_key' || index === modelInfo.primaryKey) {
-            filter['_key'] = value;
+            (filter as any)['_key'] = value;
         } else {
             const indexInfo = modelInfo.indexes.find(
                 info => info.name === index,

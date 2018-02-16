@@ -31,7 +31,7 @@ export abstract class AdapterBase implements Adapter {
         >();
 
         opts.models.forEach(model => {
-            model[adapterKey] = this;
+            (model as any)[adapterKey] = this;
             const modelInfo = Model.getInfo(model);
             const relations = modelInfo.relationships.filter(
                 relation => relation.kind === Relationship.HasAndBelongsToMany,
@@ -88,12 +88,13 @@ export abstract class AdapterBase implements Adapter {
         Model.notify(model, 'beforeSave');
 
         // todo(birtles): Actually figure out what changed.
-        const changed = modelInfo.columns
-            .filter(col => !col.computed)
-            .reduce(
-                (doc, col) => ({ ...doc, [col.key]: model[col.modelKey] }),
-                {},
-            );
+        const changed = modelInfo.columns.filter(col => !col.computed).reduce(
+            (doc, col) => ({
+                ...doc,
+                [col.key]: (model as any)[col.modelKey],
+            }),
+            {},
+        );
 
         await this.updateStore(model, changed);
 
@@ -108,7 +109,7 @@ export abstract class AdapterBase implements Adapter {
 
         Model.notify(model, 'beforeDelete');
 
-        if (!model[modelInfo.primaryKey]) {
+        if (!(model as any)[modelInfo.primaryKey]) {
             throw new Error(
                 'Cannot delete model without a populated primary key.',
             );
@@ -143,7 +144,7 @@ export abstract class AdapterBase implements Adapter {
             case Relationship.HasMany:
                 joinData = await this.get(
                     relationshipModel,
-                    model[modelInfo.primaryKey],
+                    (model as any)[modelInfo.primaryKey],
                     { index: relationship.foreignKey },
                 );
                 if (opts.predicate) {
@@ -153,7 +154,7 @@ export abstract class AdapterBase implements Adapter {
             case Relationship.BelongsTo:
                 joinData = await this.getOne(
                     relationshipModel,
-                    model[relationship.foreignKey!],
+                    (model as any)[relationship.foreignKey!],
                 );
                 if (opts.predicate) {
                     await opts.predicate(joinData);
@@ -162,7 +163,7 @@ export abstract class AdapterBase implements Adapter {
             case Relationship.HasOne:
                 joinData = await this.getOne(
                     relationshipModel,
-                    model[modelInfo.primaryKey],
+                    (model as any)[modelInfo.primaryKey],
                     { index: relationship.foreignKey },
                 );
                 if (opts.predicate) {
@@ -177,14 +178,14 @@ export abstract class AdapterBase implements Adapter {
                             relationshipModelInfo.table,
                         ),
                     ),
-                    model[modelInfo.primaryKey],
+                    (model as any)[modelInfo.primaryKey],
                     { index: `${modelInfo.table}_id` },
                 );
                 joinData = await Promise.all(
                     linkedModels.map(model =>
                         this.getOne(
                             relationshipModel,
-                            model[`${relationshipModelInfo.table}_id`],
+                            (model as any)[`${relationshipModelInfo.table}_id`],
                         ),
                     ),
                 );
@@ -195,7 +196,7 @@ export abstract class AdapterBase implements Adapter {
                 );
         }
 
-        model[relationship.key] = joinData;
+        (model as any)[relationship.key] = joinData;
 
         Model.notify(model, 'afterJoin', relationship);
 
