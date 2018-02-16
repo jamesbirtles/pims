@@ -1,0 +1,35 @@
+{
+    "name": "pims-rethinkdb",
+    "version": "1.0.0-beta.3",
+    "description": "RethinkDB adapter for PIMS",
+    "main": "dist/index.js",
+    "typings": "dist/index",
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "rm -rf dist && npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/UnwrittenFun/pims.git"
+    },
+    "keywords": [
+        "rethindb",
+        "rethink",
+        "thinky",
+        "pims"
+    ],
+    "author": "James Birtles <jameshbirtles@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/UnwrittenFun/pims/issues"
+    },
+    "homepage": "https://github.com/UnwrittenFun/pims#readme",
+    "dependencies": {
+        "pims": "^1.0.0-beta.3",
+        "rethinkdbdash": "^2.3.31"
+    },
+    "devDependencies": {
+        "@types/node": "^9.4.6",
+        "typescript": "^2.7.2"
+    }
+}

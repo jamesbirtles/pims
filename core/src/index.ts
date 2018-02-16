@@ -5,5 +5,3 @@ export * from './relationships';
 
 export * from './adapters';
 export * from './adapters/base';
-export * from './adapters/arango';
-export * from './adapters/rethink';

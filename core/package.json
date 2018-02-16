@@ -30,12 +30,6 @@
     "homepage": "https://github.com/UnwrittenFun/pims#readme",
     "devDependencies": {
         "@types/node": "^7.0.8",
-        "arangojs": "^5.7.0",
-        "rethinkdbdash": "^2.3.28",
         "typescript": "^2.2.1"
-    },
-    "peerDependencies": {
-        "arangojs": "^5.7.0",
-        "rethinkdbdash": "^2.3.28"
     }
 }

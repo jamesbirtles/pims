@@ -1,8 +1,13 @@
+import {
+    AdapterBase,
+    AdapterOptions,
+    Relationship,
+    Model,
+    ModelCtor,
+    ModelInfo,
+    modelInfoKey,
+} from 'pims';
 import * as rethinkdb from 'rethinkdbdash';
-
-import { Model, ModelCtor, ModelInfo, modelInfoKey } from '../model';
-import { Relationship } from '../relationships';
-import { AdapterBase, AdapterOptions } from './base';
 
 export interface RethinkAdapterOptions
     extends rethinkdb.ImportOptions,

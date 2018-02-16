@@ -1,9 +1,13 @@
+import {
+    AdapterBase,
+    AdapterOptions,
+    Model,
+    ModelCtor,
+    QueryOptions,
+    GetOptions,
+} from 'pims';
 import { Database } from 'arangojs';
-
-import { Model, ModelCtor } from '../model';
-import { QueryOptions, GetOptions } from './';
-import { AdapterBase, AdapterOptions } from './base';
-import { set } from '../utils';
+import { set } from './utils';
 
 export interface ArangoAdapterOptions extends AdapterOptions {
     username: string;
@@ -57,9 +61,12 @@ export class ArangoAdapter extends AdapterBase {
         super(opts);
 
         this.db = new Database({
-            url: `http://${opts.username}:${opts.password}@${opts.host}:${opts.port}`,
-            databaseName: opts.database,
+            url: `http://${opts.username}:${opts.password}@${opts.host}:${
+                opts.port
+            }`,
         });
+
+        this.db.useDatabase(opts.database);
     }
 
     public async ensure(): Promise<void> {

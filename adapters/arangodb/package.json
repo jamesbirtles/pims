@@ -1,0 +1,34 @@
+{
+    "name": "pims-arangodb",
+    "version": "1.0.0-beta.3",
+    "description": "ArangoDB adapter for PIMS",
+    "main": "dist/index.js",
+    "typings": "dist/index",
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "rm -rf dist && npm run build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/UnwrittenFun/pims.git"
+    },
+    "keywords": [
+        "arangodb",
+        "arango",
+        "pims"
+    ],
+    "author": "James Birtles <jameshbirtles@gmail.com>",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/UnwrittenFun/pims/issues"
+    },
+    "homepage": "https://github.com/UnwrittenFun/pims#readme",
+    "dependencies": {
+        "arangojs": "^6.1.1",
+        "pims": "^1.0.0-beta.3"
+    },
+    "devDependencies": {
+        "@types/node": "^9.4.6",
+        "typescript": "^2.7.2"
+    }
+}
