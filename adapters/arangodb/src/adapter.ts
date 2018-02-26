@@ -7,6 +7,7 @@ import {
     GetOptions,
 } from 'pims';
 import { Database } from 'arangojs';
+import { ArangoError } from 'arangojs/lib/cjs/error';
 import { set } from './utils';
 
 export interface ArangoAdapterOptions extends AdapterOptions {
@@ -108,7 +109,14 @@ export class ArangoAdapter extends AdapterBase {
         const modelInfo = Model.getInfo(ctor);
         const row = await this.db
             .collection(modelInfo.table)
-            .firstExample(this.asExample(ctor, filter));
+            .firstExample(this.asExample(ctor, filter))
+            .catch(err => {
+                if (isArangoError(err) && err.errorNum == 404) {
+                    return null;
+                }
+
+                throw err;
+            });
         return this.mapToModel(ctor, row);
     }
 
@@ -188,6 +196,10 @@ export class ArangoAdapter extends AdapterBase {
     }
 
     private mapToModel(ctor: ModelCtor<any>, row: any): any {
+        if (row == null) {
+            return null;
+        }
+
         const modelInfo = Model.getInfo(ctor);
 
         const key = row._key;
@@ -242,4 +254,8 @@ export class ArangoAdapter extends AdapterBase {
 
         return filter;
     }
+}
+
+function isArangoError(err: any): err is ArangoError {
+    return err.isArangoError === true;
 }
