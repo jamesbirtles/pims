@@ -62,12 +62,11 @@ export class ArangoAdapter extends AdapterBase {
         super(opts);
 
         this.db = new Database({
-            url: `http://${opts.username}:${opts.password}@${opts.host}:${
-                opts.port
-            }`,
+            url: `http://${opts.host}:${opts.port}`,
         });
 
         this.db.useDatabase(opts.database);
+        this.db.useBasicAuth(opts.username, opts.password);
     }
 
     public async ensure(): Promise<void> {
