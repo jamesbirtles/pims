@@ -15,7 +15,9 @@ export interface ArangoAdapterOptions extends AdapterOptions {
     password: string;
     host: string;
     port: number;
-    database: string;
+
+    // Default database used if the model doesn't specify one
+    database?: string;
 }
 
 enum CollectionStatus {
@@ -34,6 +36,7 @@ enum CollectionType {
 
 interface CollectionInfo {
     id: string;
+    database: string;
     name: string;
     isSystem: boolean;
     status: CollectionStatus;
@@ -55,22 +58,59 @@ interface CollectionUpdateResult {
 }
 
 export class ArangoAdapter extends AdapterBase {
-    public db: Database;
-    private collections: CollectionInfo[];
+    public dbs = new Map<string, Database>();
+    private collections: CollectionInfo[] = [];
+    private defaultDatabase?: string;
 
     constructor(opts: ArangoAdapterOptions) {
         super(opts);
 
-        this.db = new Database({
-            url: `http://${opts.host}:${opts.port}`,
-        });
+        this.defaultDatabase = opts.database;
 
-        this.db.useDatabase(opts.database);
-        this.db.useBasicAuth(opts.username, opts.password);
+        for (const model of opts.models) {
+            const dbName =
+                Model.getInfo(model).database || this.defaultDatabase;
+            if (!dbName) {
+                throw new Error(
+                    `No database specified for model ${
+                        model.name
+                    } and no default was set.`,
+                );
+            }
+
+            if (this.dbs.has(dbName)) {
+                continue;
+            }
+
+            const db = new Database({
+                url: `http://${opts.host}:${opts.port}`,
+            });
+            db.useDatabase(dbName);
+            db.useBasicAuth(opts.username, opts.password);
+            this.dbs.set(dbName, db);
+        }
+    }
+
+    public db(name: string): Database {
+        if (!name && this.defaultDatabase) {
+            name = this.defaultDatabase;
+        }
+
+        if (!this.dbs.has(name)) {
+            throw new Error(`Unknown database ${name}`);
+        }
+
+        return this.dbs.get(name)!;
     }
 
     public async ensure(): Promise<void> {
-        this.collections = await this.db.listCollections(true);
+        for (const db of this.dbs.values()) {
+            const cols: CollectionInfo[] = await db.listCollections(true);
+            this.collections.push(
+                ...cols.map(col => ({ ...col, database: db.name! })),
+            );
+        }
+
         return super.ensure();
     }
 
@@ -78,7 +118,9 @@ export class ArangoAdapter extends AdapterBase {
         // todo(birtles): support opts
 
         const modelInfo = Model.getInfo(ctor);
-        const cursor = await this.db.collection(modelInfo.table).all();
+        const cursor = await this.db(modelInfo.database)
+            .collection(modelInfo.table)
+            .all();
         const rows: any[] = await cursor.all();
         return rows.map(row => this.mapToModel(ctor, row));
     }
@@ -91,7 +133,7 @@ export class ArangoAdapter extends AdapterBase {
         // todo(birtles): support opts
 
         const modelInfo = Model.getInfo(ctor);
-        const cursor = await this.db
+        const cursor = await this.db(modelInfo.database)
             .collection(modelInfo.table)
             .byExample(this.asExample(ctor, filter));
         const rows: any[] = await cursor.all();
@@ -106,7 +148,7 @@ export class ArangoAdapter extends AdapterBase {
         // todo(birtles): support opts
 
         const modelInfo = Model.getInfo(ctor);
-        const row = await this.db
+        const row = await this.db(modelInfo.database)
             .collection(modelInfo.table)
             .firstExample(this.asExample(ctor, filter))
             .catch(err => {
@@ -150,8 +192,16 @@ export class ArangoAdapter extends AdapterBase {
     protected async ensureTable(ctor: ModelCtor<any>): Promise<void> {
         const modelInfo = Model.getInfo(ctor);
 
-        const collection = this.db.collection(modelInfo.table);
-        if (this.collections.find(c => c.name === modelInfo.table) == null) {
+        const collection = this.db(modelInfo.database).collection(
+            modelInfo.table,
+        );
+        if (
+            this.collections.find(
+                c =>
+                    c.database === modelInfo.database &&
+                    c.name === modelInfo.table,
+            ) == null
+        ) {
             await collection.create({ type: CollectionType.Document });
         }
 
@@ -170,7 +220,7 @@ export class ArangoAdapter extends AdapterBase {
         // todo(birtles): Possibly check if we retrieved the document or not.
         if (key == null) {
             // Create the document
-            const res: CollectionSaveResult = await this.db
+            const res: CollectionSaveResult = await this.db(modelInfo.database)
                 .collection(modelInfo.table)
                 .save(payload);
 
@@ -182,14 +232,16 @@ export class ArangoAdapter extends AdapterBase {
 
         // Update the document
         delete payload[modelInfo.primaryKey];
-        await this.db.collection(modelInfo.table).update(key, payload);
+        await this.db(modelInfo.database)
+            .collection(modelInfo.table)
+            .update(key, payload);
     }
 
     protected async deleteFromStore(model: any): Promise<void> {
         const ctor = <ModelCtor<any>>model.constructor;
         const modelInfo = Model.getInfo(ctor);
 
-        await this.db
+        await this.db(modelInfo.database)
             .collection(modelInfo.table)
             .remove(model[modelInfo.primaryKey]);
     }
