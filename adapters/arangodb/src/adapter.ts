@@ -198,7 +198,7 @@ export class ArangoAdapter extends AdapterBase {
         if (
             this.collections.find(
                 c =>
-                    c.database === modelInfo.database &&
+                    (c.database != null && c.database === modelInfo.database) &&
                     c.name === modelInfo.table,
             ) == null
         ) {
