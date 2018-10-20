@@ -191,11 +191,11 @@ export class ArangoAdapter extends AdapterBase {
 
     protected async ensureTable(ctor: ModelCtor<any>): Promise<void> {
         const modelInfo = Model.getInfo(ctor);
-        const dbName = modelInfo.database || (<string>this.defaultDatabase);
 
-        const collection = this.db(dbName).collection(
+        const collection = this.db(modelInfo.database).collection(
             modelInfo.table,
         );
+        const dbName = modelInfo.database || this.defaultDatabase;
         if (
             this.collections.find(
                 c =>
