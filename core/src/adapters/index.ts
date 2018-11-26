@@ -17,7 +17,7 @@ export interface JoinOptions {
 
 export interface Adapter {
     ensure(): Promise<void>;
-    save<M>(model: M): Promise<M>;
+    save<M>(model: M, replace?: boolean): Promise<M>;
     delete<M>(model: M): Promise<void>;
     all<T>(ctor: ModelCtor<T>, opts?: QueryOptions): Promise<T[]>;
     find<T>(

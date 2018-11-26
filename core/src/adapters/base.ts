@@ -81,7 +81,13 @@ export abstract class AdapterBase implements Adapter {
         );
     }
 
-    public async save<M>(model: M): Promise<M> {
+    /**
+     * Save the model to the Database.
+     * 
+     * If replace is set to true, the entire model will be **replaced**. Otherwise
+     * default action would be to update the document.
+     */
+    public async save<M>(model: M, replace: boolean = false): Promise<M> {
         const ctor = <ModelCtor<M>>model.constructor;
         const modelInfo = Model.getInfo(ctor);
 
@@ -96,7 +102,7 @@ export abstract class AdapterBase implements Adapter {
             {},
         );
 
-        await this.updateStore(model, changed);
+        await this.updateStore(model, changed, replace);
 
         Model.notify(model, 'afterSave');
 
@@ -233,6 +239,6 @@ export abstract class AdapterBase implements Adapter {
     ): Promise<T>;
 
     protected abstract ensureTable(ctor: ModelCtor<any>): Promise<void>;
-    protected abstract updateStore(model: any, payload: any): Promise<void>;
+    protected abstract updateStore(model: any, payload: any, replace: boolean): Promise<void>;
     protected abstract deleteFromStore(model: any): Promise<void>;
 }

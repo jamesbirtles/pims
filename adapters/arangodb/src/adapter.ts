@@ -212,7 +212,7 @@ export class ArangoAdapter extends AdapterBase {
         );
     }
 
-    protected async updateStore(model: any, payload: any) {
+    protected async updateStore(model: any, payload: any, replace: boolean) {
         const ctor = <ModelCtor<any>>model.constructor;
         const modelInfo = Model.getInfo(ctor);
         const key = model[modelInfo.primaryKey];
@@ -230,11 +230,16 @@ export class ArangoAdapter extends AdapterBase {
             return;
         }
 
-        // Update the document
         delete payload[modelInfo.primaryKey];
-        await this.db(modelInfo.database)
-            .collection(modelInfo.table)
-            .update(key, payload);
+        const document = await this.db(modelInfo.database)
+            .collection(modelInfo.table);
+
+        // Handle replacing or updating a document.
+        if (replace) {
+            await document.replace(key, payload);
+        } else {
+            await document.update(key, payload);
+        }
     }
 
     protected async deleteFromStore(model: any): Promise<void> {
