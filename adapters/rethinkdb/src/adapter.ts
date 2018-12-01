@@ -172,12 +172,12 @@ export class RethinkAdapter extends AdapterBase {
         await this.getModelQuery(ctor).indexWait();
     }
 
-    protected async updateStore(model: any, payload: any) {
+    protected async updateStore(model: any, payload: any, replace: boolean) {
         const ctor = <ModelCtor<any>>model.constructor;
         const modelInfo = Model.getInfo(ctor);
 
         const doc = await this.getModelQuery(ctor).insert(payload, {
-            conflict: 'update',
+            conflict: replace ? 'replace' : 'update',
         });
 
         if (model[modelInfo.primaryKey] == null && doc.generated_keys) {
