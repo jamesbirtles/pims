@@ -195,10 +195,11 @@ export class ArangoAdapter extends AdapterBase {
         const collection = this.db(modelInfo.database).collection(
             modelInfo.table,
         );
+        const dbName = modelInfo.database || this.defaultDatabase;
         if (
             this.collections.find(
                 c =>
-                    c.database === modelInfo.database &&
+                    c.database === dbName &&
                     c.name === modelInfo.table,
             ) == null
         ) {
