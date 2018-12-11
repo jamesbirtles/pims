@@ -24,11 +24,11 @@
     },
     "homepage": "https://github.com/UnwrittenFun/pims#readme",
     "dependencies": {
-        "arangojs": "^6.1.1",
-        "pims": "^1.0.2"
+        "arangojs": "^6.9.0",
+        "pims": "^1.0.3"
     },
     "devDependencies": {
-        "@types/node": "^9.4.6",
-        "typescript": "^2.7.2"
+        "@types/node": "^10.12.12",
+        "typescript": "^3.2.2"
     }
 }
