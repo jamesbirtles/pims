@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es6",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "sourceMap": true,
+        "outDir": "dist",
+        "declaration": true,
+        "lib": ["dom", "es2015", "es2016.array.include"],
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "baseUrl": ".",
+        "paths": {
+            "pims": ["../../core"]
+        },
+        "esModuleInterop": true
+    }
+}

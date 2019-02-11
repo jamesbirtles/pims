@@ -15,6 +15,7 @@ export interface IndexInfo {
     options?: {
         multi?: boolean;
         geo?: boolean;
+        unique?: boolean;
     };
 }
 

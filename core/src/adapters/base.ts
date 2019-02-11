@@ -83,7 +83,7 @@ export abstract class AdapterBase implements Adapter {
 
     /**
      * Save the model to the Database.
-     * 
+     *
      * If replace is set to true, the entire model will be **replaced**. Otherwise
      * default action would be to update the document.
      */
@@ -94,13 +94,15 @@ export abstract class AdapterBase implements Adapter {
         Model.notify(model, 'beforeSave');
 
         // todo(birtles): Actually figure out what changed.
-        const changed = modelInfo.columns.filter(col => !col.computed).reduce(
-            (doc, col) => ({
-                ...doc,
-                [col.key]: (model as any)[col.modelKey],
-            }),
-            {},
-        );
+        const changed = modelInfo.columns
+            .filter(col => !col.computed)
+            .reduce(
+                (doc, col) => ({
+                    ...doc,
+                    [col.key]: (model as any)[col.modelKey],
+                }),
+                {},
+            );
 
         await this.updateStore(model, changed, replace);
 
@@ -226,7 +228,7 @@ export abstract class AdapterBase implements Adapter {
         ctor: ModelCtor<T>,
         filter: Partial<T>,
         opts?: QueryOptions,
-    ): Promise<T>;
+    ): Promise<T | null>;
     public abstract get<T>(
         ctor: ModelCtor<T>,
         value: any,
@@ -236,9 +238,13 @@ export abstract class AdapterBase implements Adapter {
         ctor: ModelCtor<T>,
         value: any,
         opts?: GetOptions,
-    ): Promise<T>;
+    ): Promise<T | null>;
 
     protected abstract ensureTable(ctor: ModelCtor<any>): Promise<void>;
-    protected abstract updateStore(model: any, payload: any, replace: boolean): Promise<void>;
+    protected abstract updateStore(
+        model: any,
+        payload: any,
+        replace: boolean,
+    ): Promise<void>;
     protected abstract deleteFromStore(model: any): Promise<void>;
 }
