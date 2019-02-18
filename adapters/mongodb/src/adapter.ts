@@ -6,7 +6,12 @@ import {
     AdapterOptions,
     Model,
 } from 'pims';
-import { MongoClientOptions, MongoClient, FindOneOptions } from 'mongodb';
+import {
+    MongoClientOptions,
+    MongoClient,
+    FindOneOptions,
+    ObjectId,
+} from 'mongodb';
 import set from 'lodash.set';
 import memoize from 'lodash.memoize';
 
@@ -51,29 +56,31 @@ export class MongoAdapter extends AdapterBase {
             .toArray();
     }
 
-    public find<T>(
+    public async find<T>(
         ctor: ModelCtor<T>,
         filter: Partial<T>,
         opts?: FindOpts,
     ): Promise<T[]> {
         const modelInfo = Model.getInfo(ctor);
-        return this.mongo
+        const rows = await this.mongo
             .db(modelInfo.database)
             .collection(modelInfo.table)
             .find(filter, getFindOpts(opts))
             .toArray();
+        return rows.map(row => mapToModel(ctor, row));
     }
 
-    public findOne<T>(
+    public async findOne<T>(
         ctor: ModelCtor<T>,
         filter: Partial<T>,
         opts?: FindOpts,
     ): Promise<T | null> {
         const modelInfo = Model.getInfo(ctor);
-        return this.mongo
+        const row = await this.mongo
             .db(modelInfo.database)
             .collection(modelInfo.table)
             .findOne(filter, getFindOpts(opts));
+        return mapToModel(ctor, row);
     }
 
     public get<T>(
@@ -128,15 +135,35 @@ export class MongoAdapter extends AdapterBase {
             .db(modelInfo.database)
             .collection(modelInfo.table);
 
+        payload = Object.keys(payload).reduce((obj, key) => {
+            if (key === modelInfo.primaryKey) {
+                return { ...obj, _id: new ObjectId(payload[key]) };
+            }
+
+            const columnInfo = modelInfo.columns.find(c => c.key === key);
+
+            if (
+                columnInfo &&
+                columnInfo.meta.objectId &&
+                !(payload[key] instanceof ObjectId)
+            ) {
+                return { ...obj, [key]: new ObjectId(payload[key]) };
+            }
+
+            return { ...obj, [key]: payload[key] };
+        }, {});
+
         if (key == null) {
             const res = await collection.insertOne(payload);
             model[modelInfo.primaryKey] = res.insertedId;
         }
-
         if (replace) {
-            await collection.replaceOne({ _id: key }, payload);
+            await collection.replaceOne({ _id: new ObjectId(key) }, payload);
         } else {
-            await collection.updateOne({ _id: key }, payload);
+            await collection.updateOne(
+                { _id: new ObjectId(key) },
+                { $set: payload },
+            );
         }
     }
 
@@ -169,23 +196,53 @@ function getFilterForIndex(
     const filter: Record<string, any> = {};
 
     if (index === '_id' || index === modelInfo.primaryKey) {
-        filter['_id'] = value;
+        filter['_id'] = new ObjectId(value);
     } else {
-        const indexInfo = modelInfo.indexes.find(info => info.name === index);
+        const indexInfo = modelInfo.indexes.find(info => info.name === index)!;
         const values = Array.isArray(value) ? value : [value];
-        indexInfo!.keys.forEach((key, i) => set(filter, key, values[i]));
+        indexInfo!.keys.forEach((key, i) => {
+            const column = modelInfo.columns.find(c => c.key === key)!;
+            let value = values[i];
+            if (column.meta.objectId) {
+                value = new ObjectId(value);
+            }
+            set(filter, key, value);
+        });
     }
 
     return filter;
 }
 
 function getFindOpts(opts?: FindOpts): FindOneOptions {
-    const findOpts: FindOneOptions = {};
-    if (opts && opts.indexes) {
-        findOpts.hint = opts.indexes.reduce(
-            (hint, index) => ({ ...hint, [index]: 1 }),
-            {},
-        );
+    // todo(birtles): investigate hints for indexes
+    return {};
+}
+
+function mapToModel(ctor: ModelCtor<any>, row: any) {
+    if (row == null) {
+        return null;
     }
-    return findOpts;
+
+    const modelInfo = Model.getInfo(ctor);
+
+    row = Object.keys(row).reduce((obj, key) => {
+        if (key === '_id') {
+            return { ...obj, [modelInfo.primaryKey]: row._id.toHexString() };
+        }
+
+        const columnInfo = modelInfo.columns.find(c => c.key === key);
+        if (
+            columnInfo &&
+            columnInfo.meta.objectId &&
+            row[key] instanceof ObjectId
+        ) {
+            return { ...obj, [key]: row[key].toHexString() };
+        }
+
+        return { ...obj, [key]: row[key] };
+    }, {});
+
+    const model = Model.construct(ctor, row);
+    Model.notify(model, 'afterRetrieve');
+    return model;
 }
