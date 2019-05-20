@@ -7,6 +7,7 @@ export interface ColumnInfo {
     primary?: boolean;
     secondary?: boolean;
     computed?: boolean;
+    meta: Record<string, any>;
 }
 
 export function Column(info?: Partial<ColumnInfo>): any {
@@ -26,6 +27,7 @@ export function Column(info?: Partial<ColumnInfo>): any {
             key: String(key),
             tags: [],
             computed,
+            meta: {},
             ...info,
         };
 

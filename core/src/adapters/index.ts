@@ -29,9 +29,13 @@ export interface Adapter {
         ctor: ModelCtor<T>,
         filter: Partial<T>,
         opts?: QueryOptions,
-    ): Promise<T>;
+    ): Promise<T | null>;
     get<T>(ctor: ModelCtor<T>, value: any, opts?: GetOptions): Promise<T[]>;
-    getOne<T>(ctor: ModelCtor<T>, value: any, opts?: GetOptions): Promise<T>;
+    getOne<T>(
+        ctor: ModelCtor<T>,
+        value: any,
+        opts?: GetOptions,
+    ): Promise<T | null>;
     join<M>(model: M, relationshipKey: string, opts?: JoinOptions): Promise<M>;
 }
 

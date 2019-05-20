@@ -1,9 +1,8 @@
 {
-    "name": "pims-rethinkdb",
-    "version": "1.0.0",
-    "description": "RethinkDB adapter for PIMS",
+    "name": "pims-mongodb",
+    "version": "1.0.0-alpha.0",
+    "description": "MongoDB adapter for PIMS",
     "main": "dist/index.js",
-    "typings": "dist/index",
     "scripts": {
         "build": "tsc",
         "prepublishOnly": "rm -rf dist && npm run build"
@@ -13,10 +12,9 @@
         "url": "git+https://github.com/UnwrittenFun/pims.git"
     },
     "keywords": [
-        "rethinkdb",
-        "rethink",
-        "thinky",
-        "pims"
+        "pims",
+        "mongo",
+        "mongodb"
     ],
     "author": "James Birtles <jameshbirtles@gmail.com>",
     "license": "MIT",
@@ -25,11 +23,14 @@
     },
     "homepage": "https://github.com/UnwrittenFun/pims#readme",
     "dependencies": {
-        "pims": "^1.0.0",
-        "rethinkdbdash": "^2.3.31"
+        "@types/lodash.memoize": "^4.1.4",
+        "@types/lodash.set": "^4.3.4",
+        "@types/mongodb": "^3.1.19",
+        "lodash.memoize": "^4.1.2",
+        "lodash.set": "^4.3.2",
+        "mongodb": "^3.1.13"
     },
     "devDependencies": {
-        "@types/node": "^9.4.6",
-        "typescript": "^2.7.2"
+        "typescript": "^3.3.3"
     }
 }
