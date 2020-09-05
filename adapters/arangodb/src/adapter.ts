@@ -1,13 +1,8 @@
-import {
-    AdapterBase,
-    AdapterOptions,
-    Model,
-    ModelCtor,
-    QueryOptions,
-    GetOptions,
-} from 'pims';
-import { Database } from 'arangojs';
-import { ArangoError } from 'arangojs/lib/cjs/error';
+import { CollectionType, Database } from 'arangojs';
+import { CollectionMetadata } from 'arangojs/collection';
+import { ArangoError } from 'arangojs/error';
+import { AdapterBase, AdapterOptions, GetOptions, Model, ModelCtor, QueryOptions } from 'pims';
+
 import { set } from './utils';
 
 export interface ArangoAdapterOptions extends AdapterOptions {
@@ -20,46 +15,9 @@ export interface ArangoAdapterOptions extends AdapterOptions {
     database?: string;
 }
 
-enum CollectionStatus {
-    NewBorn = 1,
-    Unloaded,
-    Loaded,
-    BeingUnloaded,
-    Deleted,
-    Loading,
-}
-
-enum CollectionType {
-    Document = 2,
-    Edges,
-}
-
-interface CollectionInfo {
-    id: string;
-    database: string;
-    name: string;
-    isSystem: boolean;
-    status: CollectionStatus;
-    type: CollectionType;
-}
-
-interface CollectionSaveResult {
-    _id: string;
-    _key: string;
-    _rev: string;
-    new?: object;
-}
-
-interface CollectionUpdateResult {
-    _id: string;
-    _key: string;
-    _rev: string;
-    _oldRev: string;
-}
-
 export class ArangoAdapter extends AdapterBase {
     public dbs = new Map<string, Database>();
-    private collections: CollectionInfo[] = [];
+    private collections: CollectionMetadata[] = [];
     private defaultDatabase?: string;
 
     constructor(opts: ArangoAdapterOptions) {
@@ -84,6 +42,11 @@ export class ArangoAdapter extends AdapterBase {
 
             const db = new Database({
                 url: `http://${opts.host}:${opts.port}`,
+                databaseName: dbName,
+                auth: {
+                    username: opts.username,
+                    password: opts.password,
+                },
             });
             db.useDatabase(dbName);
             db.useBasicAuth(opts.username, opts.password);
@@ -105,7 +68,7 @@ export class ArangoAdapter extends AdapterBase {
 
     public async ensure(): Promise<void> {
         for (const db of this.dbs.values()) {
-            const cols: CollectionInfo[] = await db.listCollections(true);
+            const cols = await db.listCollections();
             this.collections.push(
                 ...cols.map(col => ({ ...col, database: db.name! })),
             );
@@ -192,23 +155,25 @@ export class ArangoAdapter extends AdapterBase {
     protected async ensureTable(ctor: ModelCtor<any>): Promise<void> {
         const modelInfo = Model.getInfo(ctor);
 
-        const collection = this.db(modelInfo.database).collection(
-            modelInfo.table,
-        );
+        const collection = this.db(modelInfo.database).collection(modelInfo.table);
         const dbName = modelInfo.database || this.defaultDatabase;
+
         if (
             this.collections.find(
                 c =>
-                    c.database === dbName &&
+                    (collection as any)._connection._databaseName === dbName && // Kieron: Dirty hack to get the connection / database name as the property to get access to it was removed.
                     c.name === modelInfo.table,
             ) == null
         ) {
-            await collection.create({ type: CollectionType.Document });
+            await collection.create({ type: CollectionType.DOCUMENT_COLLECTION });
         }
 
         await Promise.all(
             modelInfo.indexes.map(index =>
-                collection.createHashIndex(index.keys),
+                collection.ensureIndex({
+                    type: 'hash',
+                    fields: index.keys,
+                }),
             ),
         );
     }
@@ -221,7 +186,7 @@ export class ArangoAdapter extends AdapterBase {
         // todo(birtles): Possibly check if we retrieved the document or not.
         if (key == null) {
             // Create the document
-            const res: CollectionSaveResult = await this.db(modelInfo.database)
+            const res = await this.db(modelInfo.database)
                 .collection(modelInfo.table)
                 .save(payload);
 
@@ -232,7 +197,7 @@ export class ArangoAdapter extends AdapterBase {
         }
 
         delete payload[modelInfo.primaryKey];
-        const document = await this.db(modelInfo.database)
+        const document = this.db(modelInfo.database)
             .collection(modelInfo.table);
 
         // Handle replacing or updating a document.
