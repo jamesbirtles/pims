@@ -161,7 +161,7 @@ export class ArangoAdapter extends AdapterBase {
         if (
             this.collections.find(
                 c =>
-                    (collection as any)._connection._databaseName === dbName && // Kieron: Dirty hack to get the connection / database name as the property to get access to it was removed.
+                    (collection as any)._db._name === dbName && // Kieron: Dirty hack to get the connection / database name as the property to get access to it was removed.
                     c.name === modelInfo.table,
             ) == null
         ) {
