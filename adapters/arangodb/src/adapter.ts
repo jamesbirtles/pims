@@ -1,6 +1,6 @@
-import { CollectionType, Database } from 'arangojs';
-import { CollectionMetadata } from 'arangojs/collection';
-import { ArangoError } from 'arangojs/error';
+import { aql, Database } from 'arangojs';
+import { AqlQuery, join } from 'arangojs/aql';
+import { CollectionMetadata, CollectionType } from 'arangojs/collection';
 import { AdapterBase, AdapterOptions, GetOptions, Model, ModelCtor, QueryOptions } from 'pims';
 
 import { set } from './utils';
@@ -15,15 +15,27 @@ export interface ArangoAdapterOptions extends AdapterOptions {
     database?: string;
 }
 
+interface PimCollectionMetaData extends CollectionMetadata {
+    database: string;
+}
+
 export class ArangoAdapter extends AdapterBase {
     public dbs = new Map<string, Database>();
-    private collections: CollectionMetadata[] = [];
+    private collections: PimCollectionMetaData[] = [];
     private defaultDatabase?: string;
 
     constructor(opts: ArangoAdapterOptions) {
         super(opts);
 
         this.defaultDatabase = opts.database;
+
+        const dbConnection = new Database({
+            url: `http://${opts.host}:${opts.port}`,
+            auth: {
+                username: opts.username,
+                password: opts.password,
+            },
+        });
 
         for (const model of opts.models) {
             const dbName =
@@ -40,17 +52,8 @@ export class ArangoAdapter extends AdapterBase {
                 continue;
             }
 
-            const db = new Database({
-                url: `http://${opts.host}:${opts.port}`,
-                databaseName: dbName,
-                auth: {
-                    username: opts.username,
-                    password: opts.password,
-                },
-            });
-            db.useDatabase(dbName);
-            db.useBasicAuth(opts.username, opts.password);
-            this.dbs.set(dbName, db);
+            const dbPool = dbConnection.database(dbName);
+            this.dbs.set(dbName, dbPool);
         }
     }
 
@@ -68,9 +71,9 @@ export class ArangoAdapter extends AdapterBase {
 
     public async ensure(): Promise<void> {
         for (const db of this.dbs.values()) {
-            const cols = await db.listCollections();
+            const cols = await db.listCollections(true);
             this.collections.push(
-                ...cols.map(col => ({ ...col, database: db.name! })),
+                ...cols.map(col => ({ ...col, database: db.name })),
             );
         }
 
@@ -81,9 +84,10 @@ export class ArangoAdapter extends AdapterBase {
         // todo(birtles): support opts
 
         const modelInfo = Model.getInfo(ctor);
-        const cursor = await this.db(modelInfo.database)
-            .collection(modelInfo.table)
-            .all();
+        const db = this.db(modelInfo.database);
+
+        const cursor = await db.query(this.createBaseQuery(modelInfo.table));
+
         const rows: any[] = await cursor.all();
         return rows.map(row => this.mapToModel(ctor, row));
     }
@@ -91,14 +95,15 @@ export class ArangoAdapter extends AdapterBase {
     public async find<T>(
         ctor: ModelCtor<T>,
         filter: Partial<T>,
-        opts: QueryOptions = {},
+        _opts: QueryOptions = {},
     ): Promise<T[]> {
         // todo(birtles): support opts
 
         const modelInfo = Model.getInfo(ctor);
-        const cursor = await this.db(modelInfo.database)
-            .collection(modelInfo.table)
-            .byExample(this.asExample(ctor, filter));
+        const db = this.db(modelInfo.database);
+
+        const cursor = await db.query(this.createBaseQuery(modelInfo.table, this.createFilterQuery(ctor, filter)));
+
         const rows: any[] = await cursor.all();
         return rows.map(row => this.mapToModel(ctor, row));
     }
@@ -106,22 +111,16 @@ export class ArangoAdapter extends AdapterBase {
     public async findOne<T>(
         ctor: ModelCtor<T>,
         filter: Partial<T>,
-        opts: QueryOptions = {},
+        _opts: QueryOptions = {},
     ): Promise<T> {
         // todo(birtles): support opts
 
         const modelInfo = Model.getInfo(ctor);
-        const row = await this.db(modelInfo.database)
-            .collection(modelInfo.table)
-            .firstExample(this.asExample(ctor, filter))
-            .catch(err => {
-                if (isArangoError(err) && err.errorNum == 404) {
-                    return null;
-                }
+        const db = this.db(modelInfo.database);
 
-                throw err;
-            });
-        return this.mapToModel(ctor, row);
+        const cursor = await db.query(this.createBaseQuery(modelInfo.table, this.createFilterQuery(ctor, filter, 1)));
+
+        return this.mapToModel(ctor, await cursor.next());
     }
 
     public get<T>(
@@ -161,7 +160,7 @@ export class ArangoAdapter extends AdapterBase {
         if (
             this.collections.find(
                 c =>
-                    (collection as any)._db._name === dbName && // Kieron: Dirty hack to get the connection / database name as the property to get access to it was removed.
+                    c.database === dbName &&
                     c.name === modelInfo.table,
             ) == null
         ) {
@@ -171,8 +170,10 @@ export class ArangoAdapter extends AdapterBase {
         await Promise.all(
             modelInfo.indexes.map(index =>
                 collection.ensureIndex({
-                    type: 'hash',
+                    type: 'persistent',
                     fields: index.keys,
+                    deduplicate: true,
+                    estimates: true,
                 }),
             ),
         );
@@ -243,17 +244,47 @@ export class ArangoAdapter extends AdapterBase {
             return '_key';
         }
 
-        return key;
+        return `${key}`;
     }
 
-    private asExample(ctor: ModelCtor<any>, filter: object): object {
-        return Object.keys(filter).reduce(
-            (dest, key) => ({
-                ...dest,
-                [this.thisOrKey(ctor, key)]: (filter as any)[key],
-            }),
-            {},
-        );
+    private createBaseQuery(collection: string, filter: AqlQuery | null = null): AqlQuery {
+        const collQuery = aql`FOR d IN @@coll`;
+
+        let query =  aql`
+            ${collQuery}
+
+            RETURN d
+        `;
+
+        if (filter != null) {
+            query = aql`
+                ${collQuery}
+                ${filter}
+
+                RETURN d
+            `;
+        }
+
+        query.bindVars = {
+            '@coll': collection,
+            ...filter?.bindVars,
+        };
+
+        return query;
+    }
+
+    private createFilterQuery(ctor: ModelCtor<any>, filter: object, limit: number | null = null): AqlQuery {
+        const filters = [];
+
+        for (const dest of Object.keys(filter)) {
+            filters.push(aql`FILTER d.${this.thisOrKey(ctor, dest)} == ${(filter as any)[dest]}`);
+        }
+
+        if (limit != null && !isNaN(limit) && limit > 0) {
+            filters.push(aql`LIMIT ${limit}`);
+        }
+
+        return join(filters);
     }
 
     private getFilterForIndex(
@@ -276,8 +307,4 @@ export class ArangoAdapter extends AdapterBase {
 
         return filter;
     }
-}
-
-function isArangoError(err: any): err is ArangoError {
-    return err.isArangoError === true;
 }

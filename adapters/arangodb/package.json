@@ -18,17 +18,23 @@
         "pims"
     ],
     "author": "James Birtles <jameshbirtles@gmail.com>",
+    "contributors": [
+        {
+            "name": "Kieron Richardson",
+            "email": "artdude543@hotmail.co.uk"
+        }
+    ],
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/UnwrittenFun/pims/issues"
     },
     "homepage": "https://github.com/UnwrittenFun/pims#readme",
     "dependencies": {
-        "arangojs": "^7.0.1",
+        "arangojs": "^8.1.0",
         "pims": "^1.0.3"
     },
     "devDependencies": {
-        "@types/node": "^14.6.4",
-        "typescript": "^4.0.2"
+        "@types/node": "^18.11.17",
+        "typescript": "^4.9.4"
     }
 }
